@@ -11,11 +11,11 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/" },
-  { icon: Zap, label: "Devices", href: "/dispositivos-flexis" },
-  { icon: AlertTriangle, label: "Alerts", href: "/alerts" },
-  { icon: Settings, label: "Settings", href: "/settings" },
-  { icon: User, label: "Profile", href: "/profile" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+  { icon: Zap, label: "Dispositivos", href: "/dispositivos-flexis" },
+  { icon: AlertTriangle, label: "Alertas", href: "/alertas" },
+  { icon: Settings, label: "Configuración", href: "/configuracion" },
+  { icon: User, label: "Perfil", href: "/perfil" },
 ]
 
 export function Sidebar({ open, onOpenChange }: SidebarProps) {
@@ -40,7 +40,7 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
                 ⚙️
               </div>
-              <span className="font-bold text-sm text-sidebar-foreground">IoT Platform</span>
+              <span className="font-bold text-sm text-sidebar-foreground">Plataforma IoT grupo 3</span>
             </div>
           )}
           <button
@@ -81,7 +81,7 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
 
         {/* Footer */}
         <div className="p-4 border-t border-sidebar-border">
-          <div className="text-xs text-sidebar-foreground/60">{open && <p>IoT Platform v1.0</p>}</div>
+          <div className="text-xs text-sidebar-foreground/60">{open && <p>Plataforma IoT v1.0</p>}</div>
         </div>
       </aside>
     </>

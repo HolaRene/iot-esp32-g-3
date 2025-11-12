@@ -16,8 +16,8 @@ export function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Welcome back! Monitor your IoT devices in real-time.</p>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard de los IoT</h1>
+          <p className="text-muted-foreground mt-1">Bienvenido a esta monitor del lado oeste.</p>
         </div>
         <Button onClick={() => setShowAddDevice(true)} className="gap-2">
           <Plus size={20} />

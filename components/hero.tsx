@@ -1,41 +1,39 @@
-import { NextLogo } from "./next-logo";
-import { SupabaseLogo } from "./supabase-logo";
-
+import Image from "next/image";
 export function Hero() {
   return (
     <div className="flex flex-col gap-16 items-center">
       <div className="flex gap-8 justify-center items-center">
         <a
-          href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
+          href="/#"
           target="_blank"
           rel="noreferrer"
         >
-          <SupabaseLogo />
+          <Image src={'/donjoe-foto.jpg'} alt="don" width={200} height={200} />
         </a>
         <span className="border-l rotate-45 h-6" />
-        <a href="https://nextjs.org/" target="_blank" rel="noreferrer">
-          <NextLogo />
+        <a href="/#" target="_blank" rel="noreferrer">
+          Proximamente
         </a>
       </div>
-      <h1 className="sr-only">Supabase and Next.js Starter Template</h1>
+      <h1 className="sr-only">Una aplicación flexi de iot</h1>
       <p className="text-3xl lg:text-4xl !leading-tight mx-auto max-w-xl text-center">
-        The fastest way to build apps with{" "}
+        con conexión a una esap32{" "}
         <a
-          href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
+          href="https://github.com/HolaRene/iot-esp32-g-3"
           target="_blank"
           className="font-bold hover:underline"
           rel="noreferrer"
         >
-          Supabase
+          Código fuente
         </a>{" "}
-        and{" "}
+        y{" "}
         <a
-          href="https://nextjs.org/"
+          href="/#"
           target="_blank"
           className="font-bold hover:underline"
           rel="noreferrer"
         >
-          Next.js
+          nada
         </a>
       </p>
       <div className="w-full p-[1px] bg-gradient-to-r from-transparent via-foreground/10 to-transparent my-8" />
