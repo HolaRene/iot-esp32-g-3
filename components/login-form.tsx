@@ -39,7 +39,7 @@ export function LoginForm({
       });
       if (error) throw error;
       // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
+      router.push("/dashboard");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -51,9 +51,9 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Inicia sesión</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Introduce tu correo electrónico para iniciar sesión.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -77,7 +77,7 @@ export function LoginForm({
                     href="/auth/forgot-password"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
-                    Forgot your password?
+                    ¿Olvidaste la contra?
                   </Link>
                 </div>
                 <Input
@@ -94,12 +94,12 @@ export function LoginForm({
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
+              ¿No tienes cuenta?{" "}
               <Link
                 href="/auth/sign-up"
                 className="underline underline-offset-4"
               >
-                Sign up
+                Registrarse
               </Link>
             </div>
           </form>
