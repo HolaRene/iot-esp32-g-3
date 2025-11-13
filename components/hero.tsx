@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 export function Hero() {
   return (
     <div className="flex flex-col gap-16 items-center">
@@ -11,9 +12,9 @@ export function Hero() {
           <Image src={'/donjoe-foto.jpg'} alt="don" width={200} height={200} />
         </a>
         <span className="border-l rotate-45 h-6" />
-        <a href="/#" target="_blank" rel="noreferrer">
-          Proximamente
-        </a>
+        <Link href="/dashboard" >
+          Ver el Tablero principal
+        </Link>
       </div>
       <h1 className="sr-only">Una aplicación flexi de iot</h1>
       <p className="text-3xl lg:text-4xl !leading-tight mx-auto max-w-xl text-center">

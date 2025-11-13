@@ -1,112 +1,213 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-interface AddDeviceModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+interface AddGroupModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onGroupCreated?: () => void; // Callback opcional para refrescar la lista
 }
 
-export function AddDeviceModal({ open, onOpenChange }: AddDeviceModalProps) {
+export function AddGroupModal({ open, onOpenChange, onGroupCreated }: AddGroupModalProps) {
+  const supabase = createClient();
+
   const [formData, setFormData] = useState({
     name: "",
-    type: "",
-    location: "",
-    esp32Id: "",
+    group_type: "general",
     description: "",
-  })
+    color: "#6366f1" // Color por defecto
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("Device added:", formData)
-    onOpenChange(false)
-    setFormData({ name: "", type: "", location: "", esp32Id: "", description: "" })
-  }
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // Obtener el usuario actual
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        toast.error("Debes iniciar sesión para crear un grupo");
+        setLoading(false);
+        return;
+      }
+
+      // Insertar nuevo grupo en la tabla "sensor_groups"
+      const { error } = await supabase.from("sensor_groups").insert([
+        {
+          user_id: user.id,
+          name: formData.name,
+          description: formData.description,
+          group_type: formData.group_type,
+          color: formData.color,
+          is_active: true,
+        },
+      ]);
+
+      if (error) {
+        console.error("Error al crear grupo:", error);
+        toast.error(`Error al crear grupo: ${error.message}`);
+      } else {
+        toast.success("✅ Grupo creado exitosamente");
+        // Resetear formulario
+        setFormData({
+          name: "",
+          group_type: "general",
+          description: "",
+          color: "#6366f1"
+        });
+
+        // Cerrar modal y ejecutar callback si existe
+        onOpenChange(false);
+        if (onGroupCreated) {
+          onGroupCreated();
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Ocurrió un error inesperado");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    // Resetear formulario al cerrar
+    setFormData({
+      name: "",
+      group_type: "general",
+      description: "",
+      color: "#6366f1"
+    });
+    onOpenChange(false);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add New Device</DialogTitle>
-          <DialogDescription>Configure a new IoT device to start monitoring sensor data.</DialogDescription>
+          <DialogTitle>Crear nuevo grupo de sensores</DialogTitle>
+          <DialogDescription>
+            Organiza tus sensores en grupos por tipo, ubicación o propósito.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Nombre del Grupo */}
+          <div className="space-y-2">
+            <Label htmlFor="name">Nombre del grupo </Label>
+            <Input
+              id="name"
+              placeholder="Ej: Monitoreo Humedad, Temperatura Exterior, etc."
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+          </div>
+
+          {/* Tipo de Grupo y Color */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Device Name</Label>
-              <Input
-                id="name"
-                placeholder="e.g., ESP32-01"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="type">Device Type</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                <SelectTrigger id="type">
-                  <SelectValue placeholder="Select type" />
+              <Label htmlFor="group_type">Tipo de grupo</Label>
+              <Select
+                value={formData.group_type}
+                onValueChange={(value) => setFormData({ ...formData, group_type: value })}
+              >
+                <SelectTrigger id="group_type">
+                  <SelectValue placeholder="Selecciona tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="temperature">Temperature Sensor</SelectItem>
-                  <SelectItem value="humidity">Humidity Sensor</SelectItem>
-                  <SelectItem value="motion">Motion Sensor</SelectItem>
-                  <SelectItem value="light">Light Sensor</SelectItem>
+                  <SelectItem value="temperature">Temperatura</SelectItem>
+                  <SelectItem value="humidity">Humedad</SelectItem>
+                  <SelectItem value="pressure">Presión</SelectItem>
+                  <SelectItem value="air_quality">Calidad del Aire</SelectItem>
+                  <SelectItem value="soil">Suelo/Plantas</SelectItem>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="custom">Personalizado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                placeholder="e.g., Living Room"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="esp32Id">Device ID</Label>
-              <Input
-                id="esp32Id"
-                placeholder="MAC address or ID"
-                value={formData.esp32Id}
-                onChange={(e) => setFormData({ ...formData, esp32Id: e.target.value })}
-                required
-              />
+              <Label htmlFor="color">Color identificador</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  id="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="w-12 h-10 cursor-pointer rounded border border-slate-300"
+                />
+                <Input
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="flex-1"
+                  placeholder="#6366f1"
+                />
+              </div>
             </div>
           </div>
 
+          {/* Descripción */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Descripción</Label>
             <Input
               id="description"
-              placeholder="Optional notes about this device"
+              placeholder="Describe el propósito de este grupo (opcional)"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
 
+          {/* Preview del grupo */}
+          <div className="p-3 border border-slate-600 rounded-lg bg-gray-400">
+            <Label className="text-sm text-slate-600">Vista previa:</Label>
+            <div className="flex items-center gap-2 mt-2">
+              <div
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: formData.color }}
+              ></div>
+              <span className="font-medium">
+                {formData.name || "Nombre del grupo"}
+              </span>
+              {formData.group_type && (
+                <span className="text-xs bg-slate-500 px-2 py-1 rounded">
+                  {formData.group_type}
+                </span>
+              )}
+            </div>
+            {formData.description && (
+              <p className="text-sm text-slate-600 mt-1">{formData.description}</p>
+            )}
+          </div>
+
+          {/* Botones */}
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              Cancelar
             </Button>
-            <Button type="submit">Add Device</Button>
+            <Button
+              type="submit"
+              disabled={loading || !formData.name.trim()}
+            >
+              {loading ? "Creando..." : "Crear grupo"}
+            </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

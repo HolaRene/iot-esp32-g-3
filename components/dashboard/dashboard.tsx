@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import { MetricsCards } from "./metrics-cards"
-import { NetworkDiagram } from "./network-diagram"
 import { TemperatureChart } from "./temperature-chart"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import { AddDeviceModal } from "../devices/add-device-modal"
+import { AddGroupModal } from "../devices/add-device-modal"
+import { GroupsOverview } from "./network-diagram"
 
 export function Dashboard() {
   const [showAddDevice, setShowAddDevice] = useState(false)
@@ -21,7 +21,7 @@ export function Dashboard() {
         </div>
         <Button onClick={() => setShowAddDevice(true)} className="gap-2">
           <Plus size={20} />
-          Add Device
+          Agrega un grupo
         </Button>
       </div>
 
@@ -34,12 +34,12 @@ export function Dashboard() {
           <TemperatureChart />
         </div>
         <div>
-          <NetworkDiagram />
+          <GroupsOverview />
         </div>
       </div>
 
       {/* Add Device Modal */}
-      <AddDeviceModal open={showAddDevice} onOpenChange={setShowAddDevice} />
+      <AddGroupModal open={showAddDevice} onOpenChange={setShowAddDevice} />
     </div>
   )
 }

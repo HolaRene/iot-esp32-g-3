@@ -1,89 +1,99 @@
 "use client"
 
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Menu, X, Home, Thermometer, Settings, Database } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { LayoutDashboard, Zap, AlertTriangle, Settings, User, ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
-interface SidebarProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
+export default function Sidebar() {
+  const [open, setOpen] = useState(false)
 
-const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: Zap, label: "Dispositivos", href: "/dispositivos-flexis" },
-  { icon: AlertTriangle, label: "Alertas", href: "/alertas" },
-  { icon: Settings, label: "Configuración", href: "/configuracion" },
-  { icon: User, label: "Perfil", href: "/perfil" },
-]
+  const toggleSidebar = () => setOpen(!open)
 
-export function Sidebar({ open, onOpenChange }: SidebarProps) {
-  const pathname = usePathname()
+  const links = [
+    { name: "Dashboard", href: "/dashboard", icon: <Home className="w-5 h-5" /> },
+    { name: "Sensores", href: "/dispositivos-flexis", icon: <Thermometer className="w-5 h-5" /> },
+    { name: "Datos", href: "/#", icon: <Database className="w-5 h-5" /> },
+    { name: "Configuración", href: "/configuracion", icon: <Settings className="w-5 h-5" /> },
+  ]
 
   return (
     <>
-      {/* Overlay for mobile */}
-      {open && <div className="fixed inset-0 z-40 md:hidden bg-black/50" onClick={() => onOpenChange(false)} />}
+      {/* Botón hamburguesa (visible solo en móvil) */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <Button
+          variant="outline"
+          size="icon"
+          className="bg-background border"
+          onClick={toggleSidebar}
+        >
+          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </Button>
+      </div>
 
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed md:static z-50 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col",
-          open ? "w-64" : "w-20",
-        )}
-      >
-        {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border bg-gradient-to-r from-primary/10 to-transparent">
-          {open && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-                ⚙️
-              </div>
-              <span className="font-bold text-sm text-sidebar-foreground">Plataforma IoT grupo 3</span>
-            </div>
-          )}
-          <button
-            onClick={() => onOpenChange(!open)}
-            className="hidden md:flex p-1.5 hover:bg-sidebar-accent rounded-lg transition-smooth text-sidebar-foreground"
-          >
-            {open ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-          </button>
-          {!open && (
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-              ⚙️
-            </div>
-          )}
+      {/* Sidebar en pantallas grandes */}
+      <div className="hidden md:flex flex-col w-64 h-screen bg-card border-r border-border shadow-sm fixed left-0 top-0 z-40">
+        <div className="p-4 border-b">
+          <h2 className="text-xl font-semibold">Panel IoT</h2>
         </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-smooth text-sm font-medium",
-                  isActive
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent",
-                )}
-              >
-                <Icon size={20} className="flex-shrink-0" />
-                {open && <span>{item.label}</span>}
-              </Link>
-            )
-          })}
+        <nav className="flex-1 p-4 space-y-2">
+          {links.map((link) => (
+            <Link
+              key={link.name}
+              href={link.href}
+              className="flex items-center gap-3 p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              {link.icon}
+              {link.name}
+            </Link>
+          ))}
         </nav>
+      </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-sidebar-border">
-          <div className="text-xs text-sidebar-foreground/60">{open && <p>Plataforma IoT v1.0</p>}</div>
-        </div>
-      </aside>
+      {/* Sidebar móvil (drawer animado) */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 20 }}
+            className="fixed top-0 left-0 w-64 h-full bg-card border-r border-border shadow-md z-50 flex flex-col"
+          >
+            <div className="p-4 border-b flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Panel IoT</h2>
+              <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <nav className="flex-1 p-4 space-y-2">
+              {links.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  {link.icon}
+                  {link.name}
+                </Link>
+              ))}
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Fondo oscuro cuando el menú está abierto (solo móvil) */}
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.4 }}
+          exit={{ opacity: 0 }}
+          onClick={toggleSidebar}
+          className="fixed inset-0 bg-black md:hidden z-40"
+        />
+      )}
     </>
   )
 }
