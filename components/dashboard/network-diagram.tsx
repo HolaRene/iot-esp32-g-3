@@ -127,7 +127,7 @@ export function GroupsOverview() {
               {loading ? "Cargando..." : `${groups.length} grupos encontrados`}
             </p>
           </div>
-          <div className="flex flex-col md:block items-center gap-2">
+          <div className="flex flex-col items-center gap-5">
             <Button
               size="sm"
               variant="outline"
@@ -150,7 +150,7 @@ export function GroupsOverview() {
         </div>
 
         {/* 📊 Debug Info */}
-        <div className="mb-4 p-3 bg-slate-600 rounded text-xs">
+        <div className="mb-4 p-3 bg-slate-500 rounded text-xs">
           <div>Estado: {loading ? "Cargando..." : "Completado"}</div>
           <div>Error: {error || "Ninguno"}</div>
           <div>Grupos encontrados: {groups.length}</div>

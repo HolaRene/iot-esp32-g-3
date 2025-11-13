@@ -27,13 +27,14 @@ export function HeroSection() {
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Button size="lg" className="gap-2 bg-primary hover:bg-primary/90">
-                            <Link href={'/auth/login'}>Inicia sesión</Link>
-                            <ArrowRight className="w-4 h-4" />
-                        </Button>
-                        <Button size="lg" variant="outline" className="border-primary/30 hover:bg-primary/5 bg-transparent">
-                            Ver Demo Interactivo
-                        </Button>
+                        <Link href={'/auth/login'}>
+                            <Button size="lg" className="gap-2 bg-primary hover:bg-primary/90">
+                                Inicia sesión
+                                <ArrowRight className="w-4 h-4" />
+                            </Button>
+                        </Link>
+                        <Link href={'/dashboard'}><Button size="lg" variant="outline" className="border-primary/30 hover:bg-primary/5 bg-transparent">
+                            Ir al tablero principal                        </Button></Link>
                     </div>
                 </div>
 

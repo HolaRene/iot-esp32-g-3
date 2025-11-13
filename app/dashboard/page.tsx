@@ -1,10 +1,45 @@
-import { AppLayout } from "@/components/layout/app-layout"
-import { Dashboard } from "@/components/dashboard/dashboard"
+"use client"
 
-export default function Home() {
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
+import { MetricsCards } from "@/components/dashboard/metrics-cards"
+import { TemperatureChart } from "@/components/dashboard/temperature-chart"
+import { AddGroupModal } from "@/components/devices/add-device-modal"
+import { GroupsOverview } from "@/components/dashboard/network-diagram"
+
+export default function Dashboard() {
+    const [showAddDevice, setShowAddDevice] = useState(false)
+
     return (
-        <AppLayout>
-            <Dashboard />
-        </AppLayout>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-foreground">Dashboard de los IoT</h1>
+                    <p className="text-muted-foreground mt-1">Bienvenido a esta monitor del lado oeste.</p>
+                </div>
+                <Button onClick={() => setShowAddDevice(true)} className="gap-2">
+                    <Plus size={20} />
+                    Agrega un grupo
+                </Button>
+            </div>
+
+            {/* Metrics */}
+            <MetricsCards />
+
+            {/* Main Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                    <TemperatureChart />
+                </div>
+                <div>
+                    <GroupsOverview />
+                </div>
+            </div>
+
+            {/* Add Device Modal */}
+            <AddGroupModal open={showAddDevice} onOpenChange={setShowAddDevice} />
+        </div>
     )
 }

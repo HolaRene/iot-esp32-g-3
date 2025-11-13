@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { AppLayout } from "@/components/layout/app-layout"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -12,6 +11,7 @@ import { AgregarSensor } from "@/components/devices/AgregarDispositivo"
 
 export default function DevicesPage() {
   const [sensors, setSensors] = useState<any[]>([])
+  console.log(sensors)
   const [openModal, setOpenModal] = useState(false)
   const supabase = createClient()
 
@@ -29,71 +29,69 @@ export default function DevicesPage() {
   }, [])
 
   return (
-    <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Sensores IoT</h1>
-            <p className="text-muted-foreground mt-1">Gestiona y clasifica tus sensores según su tipo o función.</p>
-          </div>
-          <Button onClick={() => setOpenModal(true)} className="gap-2">
-            <Plus size={20} /> Nuevo Sensor
-          </Button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Sensores IoT</h1>
+          <p className="text-muted-foreground mt-1">Gestiona y clasifica tus sensores según su tipo o función.</p>
         </div>
+        <Button onClick={() => setOpenModal(true)} className="gap-2">
+          <Plus size={20} /> Nuevo Sensor
+        </Button>
+      </div>
 
-        <Card className="overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead>Nombre</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Grupo</TableHead>
-                <TableHead>Ubicación</TableHead>
-                <TableHead>Último Dato</TableHead>
-                <TableHead>Estado</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sensors.length > 0 ? (
-                sensors.map((sensor) => (
-                  <TableRow key={sensor.id}>
-                    <TableCell>{sensor.name}</TableCell>
-                    <TableCell>{sensor.sensor_type}</TableCell>
-                    <TableCell>
-                      <Badge>{sensor.sensor_groups?.name || "Sin grupo"}</Badge>
-                    </TableCell>
-                    <TableCell>{sensor.location || "-"}</TableCell>
-                    <TableCell>
-                      {sensor.temperature
-                        ? `${sensor.temperature}°C`
-                        : sensor.humidity
-                          ? `${sensor.humidity}%`
-                          : sensor.soil_moisture
-                            ? `${sensor.soil_moisture}%`
-                            : "N/A"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={sensor.is_active ? "default" : "secondary"}
-                      >
-                        {sensor.is_active ? "Activo" : "Inactivo"}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-6">
-                    No hay sensores registrados.
+      <Card className="overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              <TableHead>Nombre</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Grupo</TableHead>
+              <TableHead>Ubicación</TableHead>
+              <TableHead>Último Dato</TableHead>
+              <TableHead>Estado</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sensors.length > 0 ? (
+              sensors.map((sensor) => (
+                <TableRow key={sensor.id}>
+                  <TableCell>{sensor.name}</TableCell>
+                  <TableCell>{sensor.sensor_type}</TableCell>
+                  <TableCell>
+                    <Badge>{sensor.sensor_groups?.name || "Sin grupo"}</Badge>
+                  </TableCell>
+                  <TableCell>{sensor.location || "-"}</TableCell>
+                  <TableCell>
+                    {sensor.temperature
+                      ? `${sensor.temperature}°C`
+                      : sensor.humidity
+                        ? `${sensor.humidity}%`
+                        : sensor.soil_moisture
+                          ? `${sensor.soil_moisture}%`
+                          : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={sensor.is_active ? "default" : "secondary"}
+                    >
+                      {sensor.is_active ? "Activo" : "Inactivo"}
+                    </Badge>
                   </TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Card>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-6">
+                  No hay sensores registrados.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Card>
 
-        <AgregarSensor open={openModal} onOpenChange={setOpenModal} onSensorAdded={fetchSensors} />
-      </div>
-    </AppLayout>
+      <AgregarSensor open={openModal} onOpenChange={setOpenModal} onSensorAdded={fetchSensors} />
+    </div>
   )
 }
