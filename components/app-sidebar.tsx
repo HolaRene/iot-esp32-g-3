@@ -3,13 +3,13 @@
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Button } from "./ui/button"
-import { Database, Home, Settings, TextCursorInputIcon, Thermometer } from "lucide-react"
+import { AlertCircle, Group, Home, LayoutDashboard, Settings, Thermometer } from "lucide-react"
 
 const links = [
-    { name: "Dashboard", href: "/dashboard", icon: <Home className="w-5 h-5" /> },
+    { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: "Sensores", href: "/dispositivos-flexis", icon: <Thermometer className="w-5 h-5" /> },
-    { name: "Datos", href: "/#", icon: <Database className="w-5 h-5" /> },
+    { name: "Alertas", href: "/alertas", icon: <AlertCircle className="w-5 h-5" /> },
+    { name: "grupos", href: "/grupos", icon: <Group className="w-5 h-5" /> },
     { name: "Configuración", href: "/configuracion", icon: <Settings className="w-5 h-5" /> },
 ]
 
@@ -24,8 +24,8 @@ const LeftSidebar = () => {
             'hidden': isFDahsboar
         })}>
             <nav className="flex flex-col gap-6 pl-5">
-                <Link href="/" className="flex items-center grebg-green-400 pb-10 max-lg:justify-centers cursor-pointer ">
-                    <TextCursorInputIcon />
+                <Link href="/" className="flex items-center grebg-green-400 pb-10 mt-5 max-lg:justify-centers cursor-pointer ">
+                    <Home />
                     <h1 className="text-24 font-extrabold max-lg:hidden">Inicio</h1>
                 </Link>
 
@@ -40,11 +40,6 @@ const LeftSidebar = () => {
                 })
                 }
             </nav>
-            <Link href={'/'} className="pl-5">
-                <Button>
-                    Cerrar sesión
-                </Button>
-            </Link>
         </section>
     )
 }

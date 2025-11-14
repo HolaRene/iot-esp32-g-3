@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { LogOut, Moon, Settings, Sun, User, Menu } from 'lucide-react'
+import { LogOut, Moon, Settings, Sun, User } from 'lucide-react'
 import { createClient } from "@/lib/supabase/client"
 
 // Componentes de shadcn
@@ -18,6 +18,7 @@ import {
 import { Button } from "./ui/button"
 import { useTheme } from "next-themes"
 import { Skeleton } from "./ui/skeleton"
+import MobileNav from "./MobileNav"
 
 interface UserProfile {
     id: string
@@ -88,11 +89,12 @@ const Navbar = () => {
 
     return (
         <nav className='p-4 flex items-center justify-between sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b'>
+            <MobileNav />
             {/* Lado izquierdo - Logo/Brand */}
             <div className="flex items-center gap-4">
-                <Link href={'/'} className="flex items-center gap-2">
+                <Link href={'/'} className="md:flex hidden sm:block items-center gap-2 ">
                     <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                        <span className="text-primary-foreground font-bold text-sm">TI</span>
+                        <span className="text-primary-foreground font-bold text-sm hidden sm:block">TI</span>
                     </div>
                     <h1 className="font-bold text-xl hidden sm:block">Tablero IoT</h1>
                 </Link>
@@ -101,51 +103,6 @@ const Navbar = () => {
             {/* Lado derecho - Navegación y usuario */}
             <div className="flex items-center gap-4">
                 {/* Navegación para usuarios autenticados */}
-                {user && (
-                    <div className="hidden md:flex items-center gap-6">
-                        <Link
-                            href="/dashboard"
-                            className="text-sm font-medium hover:text-primary transition-colors"
-                        >
-                            Dashboard
-                        </Link>
-                        <Link
-                            href="/devices"
-                            className="text-sm font-medium hover:text-primary transition-colors"
-                        >
-                            Dispositivos
-                        </Link>
-                        <Link
-                            href="/groups"
-                            className="text-sm font-medium hover:text-primary transition-colors"
-                        >
-                            Grupos
-                        </Link>
-                    </div>
-                )}
-
-                {/* Navegación móvil */}
-                {user && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon" className="md:hidden">
-                                <Menu className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                                <Link href="/dashboard">Dashboard</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/devices">Dispositivos</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/groups">Grupos</Link>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
-
                 {/* Selector de tema */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>

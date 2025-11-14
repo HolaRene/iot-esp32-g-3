@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge"
 import { Plus } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { AgregarSensor } from "@/components/devices/AgregarDispositivo"
+import Link from "next/link"
 
 export default function DevicesPage() {
   const [sensors, setSensors] = useState<any[]>([])
-  console.log(sensors)
+  // console.log(sensors)
   const [openModal, setOpenModal] = useState(false)
   const supabase = createClient()
 
@@ -56,7 +57,9 @@ export default function DevicesPage() {
             {sensors.length > 0 ? (
               sensors.map((sensor) => (
                 <TableRow key={sensor.id}>
-                  <TableCell>{sensor.name}</TableCell>
+                  <TableCell>
+                    <Link href={`/sensor/${sensor.id}`}>{sensor.name}</Link>
+                  </TableCell>
                   <TableCell>{sensor.sensor_type}</TableCell>
                   <TableCell>
                     <Badge>{sensor.sensor_groups?.name || "Sin grupo"}</Badge>
