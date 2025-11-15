@@ -19,6 +19,7 @@ import { Button } from "./ui/button"
 import { useTheme } from "next-themes"
 import { Skeleton } from "./ui/skeleton"
 import MobileNav from "./MobileNav"
+import { useRouter } from "next/navigation"
 
 interface UserProfile {
     id: string
@@ -34,6 +35,8 @@ const Navbar = () => {
     const [user, setUser] = useState<UserProfile | null>(null)
     const [loading, setLoading] = useState(true)
     const supabase = createClient()
+
+    const ruta = useRouter()
 
     // Obtener usuario actual
     useEffect(() => {
@@ -64,6 +67,7 @@ const Navbar = () => {
         try {
             await supabase.auth.signOut()
             setUser(null)
+            ruta.push('/auth/login')
         } catch (error) {
             console.error("Error signing out:", error)
         }

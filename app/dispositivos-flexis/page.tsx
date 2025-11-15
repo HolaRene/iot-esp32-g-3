@@ -5,36 +5,70 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Plus } from "lucide-react"
+import { Plus, Trash2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { AgregarSensor } from "@/components/devices/AgregarDispositivo"
 import Link from "next/link"
 
 export default function DevicesPage() {
   const [sensors, setSensors] = useState<any[]>([])
-  // console.log(sensors)
   const [openModal, setOpenModal] = useState(false)
   const supabase = createClient()
 
-  const fetchSensors = async () => {
-    const { data, error } = await supabase
-      .from("sensors_datos")
-      .select("*, sensor_groups(name, group_type)")
-      .order("created_at", { ascending: false })
+  // Map de categorías a tabla de detalle
+  const categoriaTablaMap: Record<string, string> = {
+    ambiental: "sensores_ambiental",
+    calidad_aire: "sensores_calidad_aire",
+    suelo: "sensores_suelo",
+    industrial: "sensores_industrial",
+    energia: "sensores_energia",
+    seguridad: "sensores_seguridad",
+    personalizado: "sensores_personalizado",
+  }
 
-    if (!error && data) setSensors(data)
+  const fetchSensors = async () => {
+    // Traemos los sensores principales
+    const { data: sensoresData, error: errorSensores } = await supabase
+      .from("sensores")
+      .select("*")
+      .order("creado_en", { ascending: false })
+
+    if (errorSensores) {
+      console.error(errorSensores)
+      return
+    }
+
+    if (!sensoresData) return
+
+    // Por simplicidad, no hacemos join con tablas de detalle aquí
+    setSensors(sensoresData)
   }
 
   useEffect(() => {
     fetchSensors()
   }, [])
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Estás seguro de eliminar este sensor?")) return
+
+    const { error } = await supabase
+      .from("sensores")
+      .delete()
+      .eq("id", id)
+
+    if (error) {
+      alert("Error al eliminar el sensor: " + error.message)
+    } else {
+      fetchSensors()
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Sensores IoT</h1>
-          <p className="text-muted-foreground mt-1">Gestiona y clasifica tus sensores según su tipo o función.</p>
+          <p className="text-muted-foreground mt-1">Gestiona y clasifica tus sensores según su categoría.</p>
         </div>
         <Button onClick={() => setOpenModal(true)} className="gap-2">
           <Plus size={20} /> Nuevo Sensor
@@ -46,11 +80,10 @@ export default function DevicesPage() {
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead>Nombre</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Grupo</TableHead>
+              <TableHead>Categoría</TableHead>
               <TableHead>Ubicación</TableHead>
-              <TableHead>Último Dato</TableHead>
               <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -58,34 +91,33 @@ export default function DevicesPage() {
               sensors.map((sensor) => (
                 <TableRow key={sensor.id}>
                   <TableCell>
-                    <Link href={`/sensor/${sensor.id}`}>{sensor.name}</Link>
-                  </TableCell>
-                  <TableCell>{sensor.sensor_type}</TableCell>
-                  <TableCell>
-                    <Badge>{sensor.sensor_groups?.name || "Sin grupo"}</Badge>
-                  </TableCell>
-                  <TableCell>{sensor.location || "-"}</TableCell>
-                  <TableCell>
-                    {sensor.temperature
-                      ? `${sensor.temperature}°C`
-                      : sensor.humidity
-                        ? `${sensor.humidity}%`
-                        : sensor.soil_moisture
-                          ? `${sensor.soil_moisture}%`
-                          : "N/A"}
+                    <Link href={`/sensor/${sensor.id}`}>{sensor.nombre}</Link>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={sensor.is_active ? "default" : "secondary"}
-                    >
-                      {sensor.is_active ? "Activo" : "Inactivo"}
+                    <Badge>{sensor.categoria}</Badge>
+                  </TableCell>
+                  <TableCell>{sensor.ubicacion || "-"}</TableCell>
+                  <TableCell>
+                    <Badge variant={sensor.activo ? "default" : "secondary"}>
+                      {sensor.activo ? "Activo" : "Inactivo"}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      title="Eliminar sensor"
+                      onClick={() => handleDelete(sensor.id)}
+                    >
+                      <Trash2 size={16} />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-6">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
                   No hay sensores registrados.
                 </TableCell>
               </TableRow>

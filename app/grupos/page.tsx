@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Eye, Trash2, Edit } from 'lucide-react'
 import Link from "next/link"
+import { AddGroupModal } from "@/components/devices/add-device-modal"
 
 interface SensorGroup {
     id: string
@@ -19,29 +20,47 @@ interface SensorGroup {
     created_at?: string
     updated_at?: string
     sensorCount?: number
-    deviceCount?: number
 }
 
 export default function GroupsPage() {
     const supabase = createClient()
+
+    const [showAddDevice, setShowAddDevice] = useState(false)
     const [groups, setGroups] = useState<SensorGroup[]>([])
+
+    console.log(groups)
 
     const fetchGroups = async () => {
         const { data, error } = await supabase
             .from("sensor_groups")
-            .select("*, sensors_datos(id)") // trae sensores relacionados
+            .select("*, sensores(id)") // trae sensores relacionados
             .order("created_at", { ascending: false })
 
         if (!error && data) {
             const formatted = data.map((g: any) => ({
                 ...g,
-                sensorCount: g.sensors_datos?.length || 0,
-                deviceCount: g.sensors_datos?.length || 0, // si quieres puedes diferenciar
+                sensorCount: g.sensores?.length || 0,
             }))
             setGroups(formatted)
         }
 
         if (error) console.log("Error fetching groups:", error)
+    }
+
+    const handleDeleteGroup = async (id: string) => {
+        if (!confirm("¿Estás seguro de eliminar este grupo?")) return
+
+        const { error } = await supabase
+            .from("sensor_groups")
+            .delete()
+            .eq("id", id)
+
+        if (error) {
+            alert("Error al eliminar el grupo: " + error.message)
+        } else {
+            // Refresca la tabla
+            fetchGroups()
+        }
     }
 
     useEffect(() => {
@@ -52,12 +71,12 @@ export default function GroupsPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold">Device Groups</h1>
-                    <p className="text-muted-foreground mt-1">Organize and manage your IoT devices by location or purpose.</p>
+                    <h1 className="text-3xl font-bold">Grupos de sensores</h1>
+                    <p className="text-muted-foreground mt-1">Organiza por grupos de sensores.</p>
                 </div>
-                <Button className="gap-2">
+                <Button className="gap-2" onClick={() => setShowAddDevice(true)}>
                     <Plus size={20} />
-                    New Group
+                    Nuevo grupo
                 </Button>
             </div>
 
@@ -65,13 +84,12 @@ export default function GroupsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-muted/50">
-                            <TableHead>Group Name</TableHead>
-                            <TableHead>Description</TableHead>
-                            {/* <TableHead>Devices</TableHead> */}
-                            <TableHead>Sensors</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Updated</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead>Nombre del grupo</TableHead>
+                            <TableHead>Descripción</TableHead>
+                            <TableHead>Sensores</TableHead>
+                            <TableHead>Estatus</TableHead>
+                            <TableHead>Actualizado</TableHead>
+                            <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -79,7 +97,6 @@ export default function GroupsPage() {
                             <TableRow key={group.id} className="hover:bg-muted/50 transition-smooth">
                                 <TableCell className="font-medium">{group.name}</TableCell>
                                 <TableCell className="text-sm">{group.description || "Sin descripción"}</TableCell>
-                                {/* <TableCell className="text-sm">{group.deviceCount || 0}</TableCell> */}
                                 <TableCell className="text-sm font-medium">{group.sensorCount || 0}</TableCell>
                                 <TableCell>
                                     <Badge
@@ -101,7 +118,13 @@ export default function GroupsPage() {
                                         <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit group">
                                             <Edit size={16} />
                                         </Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Delete group">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            title="Delete group"
+                                            onClick={() => handleDeleteGroup(group.id)}
+                                        >
                                             <Trash2 size={16} />
                                         </Button>
                                     </div>
@@ -112,7 +135,8 @@ export default function GroupsPage() {
                 </Table>
             </Card>
 
-            {/* <AddGroupModal open={showAddGroup} onOpenChange={setShowAddGroup} /> */}
+            {/* Add Device Modal */}
+            <AddGroupModal open={showAddDevice} onOpenChange={setShowAddDevice} />
         </div>
     )
 }

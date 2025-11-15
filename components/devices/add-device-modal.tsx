@@ -125,13 +125,13 @@ export function AddGroupModal({ open, onOpenChange, onGroupCreated }: AddGroupMo
                   <SelectValue placeholder="Selecciona tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="temperature">Temperatura</SelectItem>
-                  <SelectItem value="humidity">Humedad</SelectItem>
-                  <SelectItem value="pressure">Presión</SelectItem>
-                  <SelectItem value="air_quality">Calidad del Aire</SelectItem>
-                  <SelectItem value="soil">Suelo/Plantas</SelectItem>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="custom">Personalizado</SelectItem>
+                  <SelectItem value="sensores_ambiental">Ambientales</SelectItem>
+                  <SelectItem value="sensores_calidad_aire">Calidad de aire</SelectItem>
+                  <SelectItem value="sensores_energía">Energía</SelectItem>
+                  <SelectItem value="sensores_industrial">Industriales</SelectItem>
+                  <SelectItem value="sensores_personalizado">Personalizado</SelectItem>
+                  <SelectItem value="sensores_seguridad">Seguridad</SelectItem>
+                  <SelectItem value="sensores_suelo">Suelo</SelectItem>
                 </SelectContent>
               </Select>
             </div>

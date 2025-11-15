@@ -138,14 +138,6 @@ export function GroupsOverview() {
               <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
               Actualizar
             </Button>
-            <Button
-              size="sm"
-              onClick={() => setAddGroupModalOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus size={16} />
-              Nuevo Grupo
-            </Button>
           </div>
         </div>
 

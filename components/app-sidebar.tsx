@@ -20,7 +20,7 @@ const LeftSidebar = () => {
 
 
     return (
-        <section className={cn("left_sidebar h-[calc(100vh-5px)] flex flex-col justify-between", {
+        <section className={cn("sticky left-0 top-0 flex w-fit flex-col  justify-between  border-none  bg-black-1 pt-8 text-white-1 max-md:hidden lg:w-[270px] lg:pl-8 h-[calc(100vh-5px)] flex flex-col justify-between", {
             'hidden': isFDahsboar
         })}>
             <nav className="flex flex-col gap-6 pl-5">
