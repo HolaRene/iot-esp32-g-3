@@ -64,7 +64,7 @@ export function LoginForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="test@test.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -85,6 +85,7 @@ export function LoginForm({
                   type="password"
                   required
                   value={password}
+                  placeholder="ElgatitoFeliz123"
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>

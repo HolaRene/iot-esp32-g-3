@@ -57,15 +57,14 @@ const mockSensors = [
 
 export default function GroupDetailsPage({ id }: { id: string }) {
     const [showAddSensor, setShowAddSensor] = useState(false)
-    const groupId = id
-    console.log(groupId)
+
 
     return (
         <div className="space-y-6">
             {/* Header with back button */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link href="/groups">
+                    <Link href="/grupos">
                         <Button variant="ghost" size="icon">
                             <ArrowLeft size={20} />
                         </Button>
