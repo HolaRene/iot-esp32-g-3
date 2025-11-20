@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AlertTriangle, Lock } from 'lucide-react'
+import { Shield, AlertCircle, DoorClosed, Cloud, Droplets, Video, BellOff, Clock, ShieldCheck, Lock } from 'lucide-react'
 import { createClient } from "@/lib/supabase/client"
 
 interface SecuritySensorData {
@@ -29,16 +29,16 @@ interface EventLog {
 export function SecuritySensorDetail({ sensor }: { sensor: SecuritySensorData }) {
     const supabase = createClient()
     const [eventLog, setEventLog] = useState<EventLog[]>([])
+    const [isLoading, setIsLoading] = useState(true)
 
-    // Generar mensaje según estado
+    const getStatusIcon = (value: boolean | null) => {
+        if (value === null) return <Shield className="w-5 h-5 text-gray-400" />
+        return value ? <AlertCircle className="w-5 h-5 text-red-500" /> : <ShieldCheck className="w-5 h-5 text-green-500" />
+    }
+
     const getStatusText = (value: boolean | null, activeText: string, safeText: string) => {
         if (value === null) return "—"
         return value ? activeText : safeText
-    }
-
-    const getStatusColor = (value: boolean | null) => {
-        if (value === null) return "text-muted-foreground"
-        return value ? "text-red-500" : "text-green-500"
     }
 
     const getCardStyle = (value: boolean | null) => {
@@ -48,201 +48,227 @@ export function SecuritySensorDetail({ sensor }: { sensor: SecuritySensorData })
             : "border-green-500 bg-green-50 dark:bg-green-950"
     }
 
-    // Escuchar cambios en tiempo real
+    // Obtener historial inicial y suscribirse a tiempo real
     useEffect(() => {
         if (!sensor?.id) return
+
+        let isMounted = true
+
+        const fetchEventHistory = async () => {
+            try {
+                setIsLoading(true)
+                const { data, error } = await supabase
+                    .from('eventos_seguridad')
+                    .select('created_at, tipo, descripcion, estado')
+                    .eq('sensor_id', sensor.id)
+                    .order('created_at', { ascending: false })
+                    .limit(50)
+
+                if (error) throw error
+
+                if (isMounted && data) {
+                    const formattedEvents = data.map(event => ({
+                        hora: new Date(event.created_at).toLocaleTimeString("es-ES", {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        }),
+                        evento: event.descripcion,
+                        tipo: event.tipo as EventLog["tipo"],
+                        estado: event.estado as EventLog["estado"]
+                    }))
+                    setEventLog(formattedEvents)
+                }
+            } catch (error) {
+                console.error("Error loading security events:", error)
+            } finally {
+                if (isMounted) setIsLoading(false)
+            }
+        }
+
+        fetchEventHistory()
 
         const channel = supabase
             .channel(`realtime-security-${sensor.id}`)
             .on(
                 "postgres_changes",
                 {
-                    event: "UPDATE",
+                    event: "INSERT",
                     schema: "public",
-                    table: "sensores_seguridad",
+                    table: "eventos_seguridad",
                     filter: `sensor_id=eq.${sensor.id}`
                 },
                 (payload) => {
-                    const newData = payload.new
-                    const now = new Date().toLocaleTimeString("es-ES", {
+                    if (!isMounted) return
+
+                    const newEvent = payload.new
+                    const hora = new Date().toLocaleTimeString("es-ES", {
                         hour: "2-digit",
                         minute: "2-digit"
                     })
 
-                    const changes: string[] = []
-
-                    if (newData.movimiento) changes.push("Movimiento detectado")
-                    if (newData.puerta) changes.push("Puerta abierta")
-                    if (newData.humo) changes.push("Humo detectado")
-                    if (newData.agua) changes.push("Fuga de agua")
-
-                    // Solo agregar si hay cambio
-                    if (changes.length > 0) {
-                        const evento = changes.join(" + ")
-                        setEventLog((prev) => [
-                            { hora: now, evento, tipo: "movimiento", estado: "activo" },
-                            ...prev.slice(0, 49) // Máximo 50 eventos
-                        ])
-                    }
+                    setEventLog((prev) => [{
+                        hora,
+                        evento: newEvent.descripcion,
+                        tipo: newEvent.tipo as EventLog["tipo"],
+                        estado: newEvent.estado as EventLog["estado"]
+                    }, ...prev.slice(0, 49)])
                 }
             )
             .subscribe()
 
         return () => {
+            isMounted = false
             supabase.removeChannel(channel)
         }
-    }, [sensor?.id, supabase])
-
-    // Agregar evento inicial si hay alarma activa
-    useEffect(() => {
-        if (!sensor) return
-
-        const now = new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
-        const activeAlerts: string[] = []
-
-        if (sensor.movimiento) activeAlerts.push("Movimiento detectado")
-        if (sensor.puerta) activeAlerts.push("Puerta abierta")
-        if (sensor.humo) activeAlerts.push("Humo detectado")
-        if (sensor.agua) activeAlerts.push("Fuga de agua")
-
-        if (activeAlerts.length > 0) {
-            setEventLog([
-                { hora: now, evento: activeAlerts.join(" + "), tipo: "movimiento", estado: "activo" }
-            ])
-        }
-    }, [sensor])
+    }, [sensor.id, supabase])
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             {/* Estados de los sensores */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className={`p-6 border-2 ${getCardStyle(sensor.movimiento)}`}>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <Card className={`p-4 border-2 ${getCardStyle(sensor.movimiento)}`}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium">Movimiento</p>
-                            <p className={`text-2xl font-bold mt-2 ${getStatusColor(sensor.movimiento)}`}>
-                                {getStatusText(sensor.movimiento, "Warning ACTIVO", "Checkmark Seguro")}
+                            <p className="text-xs font-medium text-muted-foreground">Movimiento</p>
+                            <p className={`text-lg font-bold mt-1 flex items-center gap-2 ${sensor.movimiento ? "text-red-600" : "text-green-600"}`}>
+                                {getStatusIcon(sensor.movimiento)}
+                                {getStatusText(sensor.movimiento, "Activo", "Seguro")}
                             </p>
                         </div>
-                        <span className="text-4xl">Camera</span>
+                        <Video className={`w-8 h-8 ${sensor.movimiento ? "text-red-500" : "text-muted-foreground"}`} />
                     </div>
                 </Card>
 
-                <Card className={`p-6 border-2 ${getCardStyle(sensor.puerta)}`}>
+                <Card className={`p-4 border-2 ${getCardStyle(sensor.puerta)}`}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium">Puerta</p>
-                            <p className={`text-2xl font-bold mt-2 ${getStatusColor(sensor.puerta)}`}>
-                                {getStatusText(sensor.puerta, "Warning ABIERTA", "Checkmark Cerrada")}
+                            <p className="text-xs font-medium text-muted-foreground">Puerta</p>
+                            <p className={`text-lg font-bold mt-1 flex items-center gap-2 ${sensor.puerta ? "text-red-600" : "text-green-600"}`}>
+                                {getStatusIcon(sensor.puerta)}
+                                {getStatusText(sensor.puerta, "Abierta", "Cerrada")}
                             </p>
                         </div>
-                        <span className="text-4xl">Door</span>
+                        <DoorClosed className={`w-8 h-8 ${sensor.puerta ? "text-red-500" : "text-muted-foreground"}`} />
                     </div>
                 </Card>
 
-                <Card className={`p-6 border-2 ${getCardStyle(sensor.humo)}`}>
+                <Card className={`p-4 border-2 ${getCardStyle(sensor.humo)}`}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium">Humo</p>
-                            <p className={`text-2xl font-bold mt-2 ${getStatusColor(sensor.humo)}`}>
-                                {getStatusText(sensor.humo, "Alarm PELIGRO", "Checkmark Seguro")}
+                            <p className="text-xs font-medium text-muted-foreground">Humo</p>
+                            <p className={`text-lg font-bold mt-1 flex items-center gap-2 ${sensor.humo ? "text-red-600" : "text-green-600"}`}>
+                                {getStatusIcon(sensor.humo)}
+                                {getStatusText(sensor.humo, "Peligro", "Seguro")}
                             </p>
                         </div>
-                        <span className="text-4xl">Smoke</span>
+                        <Cloud className={`w-8 h-8 ${sensor.humo ? "text-red-500" : "text-muted-foreground"}`} />
                     </div>
                 </Card>
 
-                <Card className={`p-6 border-2 ${getCardStyle(sensor.agua)}`}>
+                <Card className={`p-4 border-2 ${getCardStyle(sensor.agua)}`}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium">Agua</p>
-                            <p className={`text-2xl font-bold mt-2 ${getStatusColor(sensor.agua)}`}>
-                                {getStatusText(sensor.agua, "Alarm DETECTADA", "Checkmark Seguro")}
+                            <p className="text-xs font-medium text-muted-foreground">Agua</p>
+                            <p className={`text-lg font-bold mt-1 flex items-center gap-2 ${sensor.agua ? "text-red-600" : "text-green-600"}`}>
+                                {getStatusIcon(sensor.agua)}
+                                {getStatusText(sensor.agua, "Detectada", "Seco")}
                             </p>
                         </div>
-                        <span className="text-4xl">Water</span>
+                        <Droplets className={`w-8 h-8 ${sensor.agua ? "text-red-500" : "text-muted-foreground"}`} />
                     </div>
                 </Card>
             </div>
 
             {/* Panel de control */}
-            <Card className="p-6">
-                <h3 className="text-lg font-bold mb-4">Panel de Control</h3>
-                <div className="flex flex-col md:flex-row gap-4">
-                    <Button className="flex-1 gap-2 bg-green-600 hover:bg-green-700">
-                        <Lock size={20} />
-                        Activar Sistema
+            <Card className="p-4">
+                <h3 className="text-base font-semibold mb-3">Panel de Control</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <Button className="gap-2 bg-green-600 hover:bg-green-700 text-xs" size="sm">
+                        <Shield className="w-4 h-4" />
+                        Activar
                     </Button>
-                    <Button variant="outline" className="flex-1 gap-2">
-                        Desactivar Sistema
+                    <Button variant="outline" className="gap-2 text-xs" size="sm">
+                        <Lock className="w-4 h-4" />
+                        Desactivar
                     </Button>
-                    <Button variant="destructive" className="flex-1 gap-2">
-                        <AlertTriangle size={20} />
-                        Silenciar Alarma
+                    <Button variant="destructive" className="gap-2 text-xs" size="sm">
+                        <BellOff className="w-4 h-4" />
+                        Silenciar
                     </Button>
                 </div>
             </Card>
 
             {/* Histórico de eventos */}
-            <Card className="p-6 overflow-x-auto">
-                <h3 className="text-lg font-bold mb-4">Histórico de Eventos</h3>
-                {eventLog.length > 0 ? (
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-muted/50">
-                                <TableHead>Hora</TableHead>
-                                <TableHead>Evento</TableHead>
-                                <TableHead>Tipo</TableHead>
-                                <TableHead>Estado</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {eventLog.map((event, idx) => (
-                                <TableRow key={idx} className="hover:bg-muted/50">
-                                    <TableCell className="font-medium">{event.hora}</TableCell>
-                                    <TableCell className="text-sm">{event.evento}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline">{event.tipo}</Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge
-                                            variant={event.estado === "normal" ? "default" : event.estado === "resuelto" ? "secondary" : "destructive"}
-                                        >
-                                            {event.estado}
-                                        </Badge>
-                                    </TableCell>
+            <Card className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-base font-semibold">Histórico de Eventos</h3>
+                    {isLoading && (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Clock className="w-3 h-3 animate-spin" />
+                            Cargando...
+                        </div>
+                    )}
+                </div>
+                <div className="overflow-x-auto">
+                    {eventLog.length > 0 ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/50">
+                                    <TableHead className="text-xs">Hora</TableHead>
+                                    <TableHead className="text-xs">Evento</TableHead>
+                                    <TableHead className="text-xs">Tipo</TableHead>
+                                    <TableHead className="text-xs">Estado</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                ) : (
-                    <p className="text-center text-muted-foreground py-8">
-                        No hay eventos registrados aún.
-                    </p>
-                )}
+                            </TableHeader>
+                            <TableBody>
+                                {eventLog.map((event, idx) => (
+                                    <TableRow key={idx} className="hover:bg-muted/50">
+                                        <TableCell className="text-xs font-medium">{event.hora}</TableCell>
+                                        <TableCell className="text-xs">{event.evento}</TableCell>
+                                        <TableCell className="text-xs">
+                                            <Badge variant="outline" className="text-[10px] px-1 py-0">{event.tipo}</Badge>
+                                        </TableCell>
+                                        <TableCell className="text-xs">
+                                            <Badge
+                                                variant={event.estado === "normal" ? "default" : event.estado === "resuelto" ? "secondary" : "destructive"}
+                                                className="text-[10px] px-1 py-0"
+                                            >
+                                                {event.estado}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <p className="text-center text-xs text-muted-foreground py-6">
+                            No hay eventos registrados aún.
+                        </p>
+                    )}
+                </div>
             </Card>
 
             {/* Información del sensor */}
-            <Card className="p-6">
-                <h3 className="text-lg font-bold mb-4">Información del Sensor</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="p-4">
+                <h3 className="text-base font-semibold mb-3">Información del Sensor</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <p className="text-sm text-muted-foreground">Nombre</p>
-                        <p className="text-lg font-medium mt-2">{sensor.nombre || "—"}</p>
+                        <p className="text-xs text-muted-foreground">Nombre</p>
+                        <p className="text-sm font-medium mt-1">{sensor.nombre || "—"}</p>
                     </div>
                     <div>
-                        <p className="text-sm text-muted-foreground">Ubicación</p>
-                        <p className="text-lg font-medium mt-2">{sensor.ubicacion || "—"}</p>
+                        <p className="text-xs text-muted-foreground">Ubicación</p>
+                        <p className="text-sm font-medium mt-1">{sensor.ubicacion || "—"}</p>
                     </div>
                     <div>
-                        <p className="text-sm text-muted-foreground">Estado</p>
-                        <Badge variant={sensor.activo ? "default" : "secondary"} className="mt-2">
+                        <p className="text-xs text-muted-foreground">Estado</p>
+                        <Badge variant={sensor.activo ? "default" : "secondary"} className="mt-1 text-[10px]">
                             {sensor.activo ? "Activo" : "Inactivo"}
                         </Badge>
                     </div>
                     <div>
-                        <p className="text-sm text-muted-foreground">Tipo de Alarma</p>
-                        <p className="text-lg font-medium mt-2">Combinada (4 sensores)</p>
+                        <p className="text-xs text-muted-foreground">Tipo de Alarma</p>
+                        <p className="text-sm font-medium mt-1">Combinada (4 sensores)</p>
                     </div>
                 </div>
             </Card>

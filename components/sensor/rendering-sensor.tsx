@@ -43,6 +43,8 @@ export function SensorDetailsPage({ id }: { id: string }) {
     const [loading, setLoading] = useState(true)
     const [categoria, setCategoria] = useState<SensorCategoria | null>(null)
 
+
+
     const fetchSensor = async () => {
         setLoading(true)
 
@@ -77,6 +79,7 @@ export function SensorDetailsPage({ id }: { id: string }) {
             }
             // Si no hay datos, detalles = {} → los campos serán undefined
         }
+
 
         // Combinar: base + detalles (detalles sobrescriben si hay conflicto)
         setSensor({ ...sensorData, ...detalles })
