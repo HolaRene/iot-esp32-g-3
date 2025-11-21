@@ -4,17 +4,19 @@ import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Copy, Edit, Trash2 } from 'lucide-react'
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 
-import { EnvironmentalSensorDetail } from "@/components/sensor/EnviromentSensorDetail"
 import { AirQualitySensorDetail } from "@/components/sensor/calidad-aire-detalles"
 import { EnergySensorDetail } from "@/components/sensor/sensor-energia-detalles"
 import { IndustrialSensorDetail } from "@/components/sensor/sensor-industrial-detalles"
 import { SecuritySensorDetail } from "@/components/sensor/sensor-seguridad-detalles"
 import { SoilSensorDetail } from "@/components/sensor/sensor-suelo-detalles"
 import { CustomSensorDetail } from "@/components/sensor/sensor-personalizado-detalles"
+import { EnvironmentalSensorDetail } from "./EnviromentSensorDetail"
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "../ui/sheet"
+import { Input } from "../ui/input"
 
 type SensorCategoria =
     | "ambiental"
@@ -35,23 +37,56 @@ const categoriaTablaMap: Record<SensorCategoria, string> = {
     personalizado: "sensores_personalizado",
 }
 
-// ... (importaciones iguales)
+const getExpectedFields = (categoria: SensorCategoria) => {
+    switch (categoria) {
+        case "ambiental":
+            return ["temperatura", "humedad", "presion", "luminosidad"];
+        case "calidad_aire":
+            return ["CO2", "PM2.5", "PM10", "VOC"];
+        case "energia":
+            return ["voltaje", "corriente", "potencia", "energia_total"];
+        case "industrial":
+            return ["estado_maquina", "vibracion", "temperatura_motor"];
+        case "seguridad":
+            return ["movimiento", "puerta_abierta", "alarma"];
+        case "suelo":
+            return ["humedad_suelo", "ph", "conductividad"];
+        case "personalizado":
+            return ["campo1", "campo2", "campo3"];
+        default:
+            return [];
+    }
+}
+
 
 export function SensorDetailsPage({ id }: { id: string }) {
     const supabase = createClient()
     const [sensor, setSensor] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [categoria, setCategoria] = useState<SensorCategoria | null>(null)
+    const [copied, setCopied] = useState("")
+
+    const copyToClipboard = (text: string, id: string) => {
+        navigator.clipboard.writeText(text)
+        setCopied(id)
+        setTimeout(() => setCopied(""), 2000)
+    }
 
 
 
     const fetchSensor = async () => {
         setLoading(true)
 
-        // 1. Obtener sensor base
+        // 1. Obtener sensor base con JOIN
         const { data: sensorData, error } = await supabase
             .from("sensores")
-            .select("*")
+            .select(`
+            *,
+            sensor_groups (
+                id,
+                name
+            )
+        `)
             .eq("id", id)
             .single()
 
@@ -77,14 +112,18 @@ export function SensorDetailsPage({ id }: { id: string }) {
             if (detalleData) {
                 detalles = detalleData
             }
-            // Si no hay datos, detalles = {} → los campos serán undefined
         }
 
+        // 2. Insertar grupo_nombre
+        setSensor({
+            ...sensorData,
+            grupo_nombre: sensorData.grupos?.nombre ?? null,
+            ...detalles
+        })
 
-        // Combinar: base + detalles (detalles sobrescriben si hay conflicto)
-        setSensor({ ...sensorData, ...detalles })
         setLoading(false)
     }
+
 
     useEffect(() => {
         if (id) fetchSensor()
@@ -162,7 +201,73 @@ export function SensorDetailsPage({ id }: { id: string }) {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon"><Edit size={20} /></Button>
+                    {/* BOTÓN CONECTAR */}
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="default" size="sm">Conectar</Button>
+                        </SheetTrigger>
+                        <SheetContent side="right" className="w-[320px] pl-3">
+                            <SheetHeader>
+                                <SheetTitle>Conectar Sensor</SheetTitle>
+                            </SheetHeader>
+                            <div className="space-y-4 mt-4">
+                                {/* Sensor ID */}
+                                <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">Sensor ID</p>
+                                    <div className="flex items-center gap-2">
+                                        <Input readOnly value={sensor.id} className="font-mono text-sm" />
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={() => copyToClipboard(sensor.id, "sensor-id")}
+                                        >
+                                            {copied === "sensor-id" ? <Check size={16} /> : <Copy size={16} />}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Endpoint */}
+                                <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">Endpoint</p>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            readOnly
+                                            value={`https://api-iot-control.up.railway.app/sensors/${sensor.id}`}
+                                            className="font-mono text-sm"
+                                        />
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={() =>
+                                                copyToClipboard(
+                                                    `https://api-iot-control.up.railway.app/sensors/${sensor.id}`,
+                                                    "sensor-endpoint"
+                                                )
+                                            }
+                                        >
+                                            {copied === "sensor-endpoint" ? <Check size={16} /> : <Copy size={16} />}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Campos esperados según categoría */}
+                                <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">Campos esperados</p>
+                                    <div className="flex flex-col gap-1">
+                                        {getExpectedFields(sensor.categoria).map((field) => (
+                                            <div key={field} className="flex items-center justify-between">
+                                                <span className="font-mono text-sm">{field}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <SheetFooter>
+                                <Button variant="secondary" onClick={() => console.log("Cerrar sheet")}>Cerrar</Button>
+                            </SheetFooter>
+                        </SheetContent>
+                    </Sheet>
                     <Button variant="outline" size="icon"><Trash2 size={20} /></Button>
                 </div>
             </div>
@@ -179,7 +284,7 @@ export function SensorDetailsPage({ id }: { id: string }) {
                 </Card>
                 <Card className="p-4">
                     <p className="text-xs text-muted-foreground">Grupo</p>
-                    <p className="text-lg font-bold mt-2">{sensor.grupo_id || "—"}</p>
+                    <p className="text-lg font-bold mt-2">{sensor.sensor_groups.name || "—"}</p>
                 </Card>
                 <Card className="p-4">
                     <p className="text-xs text-muted-foreground">Creado</p>

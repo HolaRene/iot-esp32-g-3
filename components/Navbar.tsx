@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { LogOut, Moon, Settings, Sun, User } from 'lucide-react'
+import { BookDashed, LogOut, Moon, Settings, Sun, User } from 'lucide-react'
 import { createClient } from "@/lib/supabase/client"
 
 // Componentes de shadcn
@@ -169,6 +169,12 @@ const Navbar = () => {
                                 <Link href="/perfil" className="cursor-pointer">
                                     <User className="h-4 w-4 mr-2" />
                                     Perfil
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href="/dashboard" className="cursor-pointer">
+                                    <BookDashed className="h-4 w-4 mr-2" />
+                                    Tablero
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>

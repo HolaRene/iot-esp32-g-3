@@ -25,7 +25,7 @@ export default function SettingsPage() {
       </div>
 
       {/* General Settings */}
-      <Card className="p-6 space-y-6">
+      {/* <Card className="p-6 space-y-6">
         <div>
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <SettingsIcon size={24} />
@@ -65,13 +65,13 @@ export default function SettingsPage() {
             <Button>Save Changes</Button>
           </div>
         </div>
-      </Card>
+      </Card> */}
 
       {/* API Configuration */}
       <Card className="p-6 space-y-4">
         <h2 className="text-xl font-semibold">API Configuration</h2>
         <p className="text-sm text-muted-foreground">
-          Use these credentials to connect your ESP32 devices and send data to the platform.
+          Usa estas credenciales para usar nuestra plataforma
         </p>
 
         <div className="space-y-4">
@@ -81,13 +81,15 @@ export default function SettingsPage() {
               <Input
                 id="api-url"
                 readOnly
-                value="https://api.iot-platform.local/data"
+                value="https://api-iot-control.up.railway.app/"
                 className="font-mono text-xs"
               />
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => copyToClipboard("https://api.iot-platform.local/data", "api-url")}
+                onClick={() =>
+                  copyToClipboard("https://api-iot-control.up.railway.app/", "api-url")
+                }
               >
                 {copied === "api-url" ? <Check size={16} /> : <Copy size={16} />}
               </Button>
@@ -101,13 +103,15 @@ export default function SettingsPage() {
                 id="api-key"
                 readOnly
                 type="password"
-                value="sk_live_abc123def456ghi789jkl"
+                value="eL-sensor-es-fleXi/porque.asi.eS/20=11=25.22?16"
                 className="font-mono text-xs"
               />
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => copyToClipboard("sk_live_abc123def456ghi789jkl", "api-key")}
+                onClick={() =>
+                  copyToClipboard("eL-sensor-es-fleXi/porque.asi.eS/20=11=25.22?16", "api-key")
+                }
               >
                 {copied === "api-key" ? <Check size={16} /> : <Copy size={16} />}
               </Button>
@@ -115,6 +119,7 @@ export default function SettingsPage() {
           </div>
         </div>
       </Card>
+
 
       {/* Alert Thresholds */}
       <Card className="p-6 space-y-6">
