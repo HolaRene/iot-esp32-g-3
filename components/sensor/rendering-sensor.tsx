@@ -40,23 +40,54 @@ const categoriaTablaMap: Record<SensorCategoria, string> = {
 const getExpectedFields = (categoria: SensorCategoria) => {
     switch (categoria) {
         case "ambiental":
-            return ["temperatura", "humedad", "presion", "luminosidad"];
+            return [
+                { field: "temperatura", type: "numeric(5,2)" },
+                { field: "humedad", type: "numeric(5,2)" },
+                { field: "presion", type: "numeric(6,2)" },
+                { field: "clima", type: "varchar(50)" },
+            ];
         case "calidad_aire":
-            return ["CO2", "PM2.5", "PM10", "VOC"];
+            return [
+                { field: "co2", type: "numeric(6,2)" },
+                { field: "pm25", type: "numeric(6,2)" },
+                { field: "voc", type: "numeric(6,2)" },
+            ];
         case "energia":
-            return ["voltaje", "corriente", "potencia", "energia_total"];
+            return [
+                { field: "voltaje", type: "numeric(6,2)" },
+                { field: "corriente", type: "numeric(6,2)" },
+                { field: "potencia", type: "numeric(8,2)" },
+            ];
         case "industrial":
-            return ["estado_maquina", "vibracion", "temperatura_motor"];
+            return [
+                { field: "vibracion", type: "numeric(6,2)" },
+                { field: "ruido", type: "numeric(6,2)" },
+                { field: "inclinacion", type: "numeric(5,2)" },
+                { field: "consumo", type: "numeric(8,2)" },
+            ];
         case "seguridad":
-            return ["movimiento", "puerta_abierta", "alarma"];
+            return [
+                { field: "movimiento", type: "boolean" },
+                { field: "puerta", type: "boolean" },
+                { field: "humo", type: "boolean" },
+                { field: "agua", type: "boolean" },
+                { field: "distancia", type: "real" },
+                { field: "luces", type: "boolean" },
+                { field: "alarma", type: "boolean" },
+            ];
         case "suelo":
-            return ["humedad_suelo", "ph", "conductividad"];
+            return [
+                { field: "humedad_suelo", type: "numeric(5,2)" },
+                { field: "ph", type: "numeric(4,2)" },
+            ];
         case "personalizado":
-            return ["campo1", "campo2", "campo3"];
+            return [
+                { field: "datos", type: "jsonb" },
+            ];
         default:
             return [];
     }
-}
+};
 
 
 export function SensorDetailsPage({ id }: { id: string }) {
@@ -253,10 +284,11 @@ export function SensorDetailsPage({ id }: { id: string }) {
                                 {/* Campos esperados según categoría */}
                                 <div className="space-y-1">
                                     <p className="text-xs text-muted-foreground">Campos esperados</p>
-                                    <div className="flex flex-col gap-1">
-                                        {getExpectedFields(sensor.categoria).map((field) => (
-                                            <div key={field} className="flex items-center justify-between">
-                                                <span className="font-mono text-sm">{field}</span>
+                                    <div className="flex flex-col gap-2">
+                                        {getExpectedFields(sensor.categoria).map(({ field, type }) => (
+                                            <div key={field} className="flex items-center justify-between p-2 rounded border">
+                                                <span className="font-mono text-sm font-medium">{field}</span>
+                                                <Badge variant="outline" className="text-xs font-mono">{type}</Badge>
                                             </div>
                                         ))}
                                     </div>
