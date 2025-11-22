@@ -7,6 +7,7 @@ import { MetricsCards } from "@/components/dashboard/metrics-cards"
 import { TemperatureChart } from "@/components/dashboard/temperature-chart"
 import { AddGroupModal } from "@/components/devices/add-device-modal"
 import { GroupsOverview } from "@/components/dashboard/network-diagram"
+import { AlertsWidget } from "@/components/dashboard/AlertsWidget"
 
 export default function Dashboard() {
     const [showAddDevice, setShowAddDevice] = useState(false)
@@ -30,11 +31,12 @@ export default function Dashboard() {
 
             {/* Main Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 space-y-6">
                     <TemperatureChart />
+                    <GroupsOverview />
                 </div>
                 <div>
-                    <GroupsOverview />
+                    <AlertsWidget />
                 </div>
             </div>
 

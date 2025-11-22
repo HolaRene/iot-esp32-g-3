@@ -17,6 +17,7 @@ import { CustomSensorDetail } from "@/components/sensor/sensor-personalizado-det
 import { EnvironmentalSensorDetail } from "./EnviromentSensorDetail"
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "../ui/sheet"
 import { Input } from "../ui/input"
+import { ScrollArea } from "../ui/scroll-area"
 
 type SensorCategoria =
     | "ambiental"
@@ -255,106 +256,108 @@ export function SensorDetailsPage({ id }: { id: string }) {
                         <SheetTrigger asChild>
                             <Button variant="default" size="sm">Conectar</Button>
                         </SheetTrigger>
-                        <SheetContent side="right" className="w-[320px] pl-3">
+                        <SheetContent side="right" className="w-[320px] pl-3 flex flex-col">
                             <SheetHeader>
                                 <SheetTitle>Conectar Sensor</SheetTitle>
                             </SheetHeader>
-                            <div className="space-y-4 mt-4">
-                                {/* Sensor ID */}
-                                <div className="space-y-1">
-                                    <p className="text-xs text-muted-foreground">Sensor ID</p>
-                                    <div className="flex items-center gap-2">
-                                        <Input readOnly value={sensor.id} className="font-mono text-sm" />
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => copyToClipboard(sensor.id, "sensor-id")}
-                                        >
-                                            {copied === "sensor-id" ? <Check size={16} /> : <Copy size={16} />}
-                                        </Button>
+                            <ScrollArea className="flex-1 pr-3">
+                                <div className="space-y-4 mt-4 pb-4">
+                                    {/* Sensor ID */}
+                                    <div className="space-y-1">
+                                        <p className="text-xs text-muted-foreground">Sensor ID</p>
+                                        <div className="flex items-center gap-2">
+                                            <Input readOnly value={sensor.id} className="font-mono text-sm" />
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                onClick={() => copyToClipboard(sensor.id, "sensor-id")}
+                                            >
+                                                {copied === "sensor-id" ? <Check size={16} /> : <Copy size={16} />}
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Endpoint */}
-                                <div className="space-y-1">
-                                    <p className="text-xs text-muted-foreground">Endpoint</p>
-                                    <div className="flex items-center gap-2">
-                                        <Input
-                                            readOnly
-                                            value={`https://api-iot-control.up.railway.app/sensors/${sensor.id}`}
-                                            className="font-mono text-sm"
-                                        />
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() =>
-                                                copyToClipboard(
-                                                    `https://api-iot-control.up.railway.app/sensors/${sensor.id}`,
-                                                    "sensor-endpoint"
-                                                )
-                                            }
-                                        >
-                                            {copied === "sensor-endpoint" ? <Check size={16} /> : <Copy size={16} />}
-                                        </Button>
+                                    {/* Endpoint */}
+                                    <div className="space-y-1">
+                                        <p className="text-xs text-muted-foreground">Endpoint</p>
+                                        <div className="flex items-center gap-2">
+                                            <Input
+                                                readOnly
+                                                value={`https://api-iot-control.up.railway.app/sensors/${sensor.id}`}
+                                                className="font-mono text-sm"
+                                            />
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                onClick={() =>
+                                                    copyToClipboard(
+                                                        `https://api-iot-control.up.railway.app/sensors/${sensor.id}`,
+                                                        "sensor-endpoint"
+                                                    )
+                                                }
+                                            >
+                                                {copied === "sensor-endpoint" ? <Check size={16} /> : <Copy size={16} />}
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Campos esperados según categoría */}
-                                <div className="space-y-1">
-                                    <p className="text-xs text-muted-foreground">Campos esperados</p>
-                                    <div className="flex flex-col gap-2">
-                                        {getExpectedFields(sensor.categoria).map(({ field, type }) => (
-                                            <div key={field} className="flex items-center justify-between p-2 rounded border">
-                                                <span className="font-mono text-sm font-medium">{field}</span>
-                                                <Badge variant="outline" className="text-xs font-mono">{type}</Badge>
+                                    {/* Campos esperados según categoría */}
+                                    <div className="space-y-1">
+                                        <p className="text-xs text-muted-foreground">Campos esperados</p>
+                                        <div className="flex flex-col gap-2">
+                                            {getExpectedFields(sensor.categoria).map(({ field, type }) => (
+                                                <div key={field} className="flex items-center justify-between p-2 rounded border">
+                                                    <span className="font-mono text-sm font-medium">{field}</span>
+                                                    <Badge variant="outline" className="text-xs font-mono">{type}</Badge>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* API Key */}
+                                    <div className="space-y-1">
+                                        <p className="text-xs text-muted-foreground">API Key</p>
+                                        <div className="flex items-center gap-2">
+                                            <Input
+                                                readOnly
+                                                value="api-secret-***"
+                                                className="font-mono text-sm"
+                                                type="password"
+                                            />
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                onClick={() => copyToClipboard("api-secret-key", "api-key")}
+                                            >
+                                                {copied === "api-key" ? <Check size={16} /> : <Copy size={16} />}
+                                            </Button>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            💡 Obtén tu API Key desde configuración del sensor
+                                        </p>
+                                    </div>
+
+                                    {/* Documentación */}
+                                    <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-3 rounded-lg">
+                                        <div className="flex items-start gap-2">
+                                            <BookOpen className="w-4 h-4 text-blue-600 mt-0.5" />
+                                            <div>
+                                                <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
+                                                    ¿Cómo conectar mi sensor?
+                                                </p>
+                                                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                                                    Consulta ejemplos de código para ESP32, Arduino, Raspberry Pi y más
+                                                </p>
+                                                <Link href="/documentacion">
+                                                    <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-xs">
+                                                        Ver documentación completa →
+                                                    </Button>
+                                                </Link>
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* API Key */}
-                                <div className="space-y-1">
-                                    <p className="text-xs text-muted-foreground">API Key</p>
-                                    <div className="flex items-center gap-2">
-                                        <Input
-                                            readOnly
-                                            value="api-secret-***"
-                                            className="font-mono text-sm"
-                                            type="password"
-                                        />
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => copyToClipboard("api-secret-key", "api-key")}
-                                        >
-                                            {copied === "api-key" ? <Check size={16} /> : <Copy size={16} />}
-                                        </Button>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        💡 Obtén tu API Key desde configuración del sensor
-                                    </p>
-                                </div>
-
-                                {/* Documentación */}
-                                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-3 rounded-lg">
-                                    <div className="flex items-start gap-2">
-                                        <BookOpen className="w-4 h-4 text-blue-600 mt-0.5" />
-                                        <div>
-                                            <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
-                                                ¿Cómo conectar mi sensor?
-                                            </p>
-                                            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                                                Consulta ejemplos de código para ESP32, Arduino, Raspberry Pi y más
-                                            </p>
-                                            <Link href="/documentacion">
-                                                <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-xs">
-                                                    Ver documentación completa →
-                                                </Button>
-                                            </Link>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </ScrollArea>
 
                             <SheetFooter>
                                 <Link href="/documentacion" className="w-full">
