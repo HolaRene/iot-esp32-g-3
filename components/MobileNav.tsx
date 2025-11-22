@@ -4,14 +4,16 @@ import { Sheet, SheetClose, SheetContent, SheetTrigger } from "./ui/sheet"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Database, Home, Settings, SquareChevronLeft, Thermometer } from "lucide-react"
+import { Home, Settings, SquareChevronLeft, Thermometer, BookOpen, Group, AlertCircle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 
 const links = [
     { name: "Dashboard", href: "/dashboard", icon: <Home className="w-5 h-5" /> },
     { name: "Sensores", href: "/dispositivos-flexis", icon: <Thermometer className="w-5 h-5" /> },
-    { name: "Datos", href: "/#", icon: <Database className="w-5 h-5" /> },
+    { name: "Alertas", href: "/alertas", icon: <AlertCircle className="w-5 h-5" /> },
+    { name: "Grupos", href: "/grupos", icon: <Group className="w-5 h-5" /> },
+    { name: "Documentación", href: "/documentacion", icon: <BookOpen className="w-5 h-5" /> },
     { name: "Configuración", href: "/configuracion", icon: <Settings className="w-5 h-5" /> },
 ]
 

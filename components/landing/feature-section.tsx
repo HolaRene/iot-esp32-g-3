@@ -1,30 +1,30 @@
 import { Card } from "@/components/ui/card"
-import { Zap, BarChart3, Layers, Shield } from "lucide-react"
+import { Zap, BarChart3, Layers, FolderTree } from "lucide-react"
 
 const features = [
     {
-        icon: Zap,
-        title: "Configuración Sencilla",
-        description: "Conecta tu ESP32 en minutos, no en horas",
-        items: ["Sin servidores complicados", "API lista", "Documentación clara"],
+        icon: FolderTree,
+        title: "Registro de Grupos",
+        description: "Organiza tus sensores en grupos personalizados",
+        items: ["Grupos ilimitados", "Descripción y etiquetas", "Gestión de estado activo/inactivo"],
+    },
+    {
+        icon: Layers,
+        title: "Sensores por Categoría",
+        description: "Crea sensores clasificados según su función",
+        items: ["7 categorías: Ambiental, Calidad de Aire, Suelo, Industrial, Energía, Seguridad, Personalizado", "Configuración específica por tipo", "Ubicación y estado"],
     },
     {
         icon: BarChart3,
         title: "Visualización en Tiempo Real",
-        description: "Gráficos que se actualizan al instante",
-        items: ["Métricas en vivo", "Histórico ilimitado", "Widgets personalizables"],
+        description: "Monitorea tus sensores con gráficos actualizados",
+        items: ["Métricas en vivo", "Histórico de datos", "Dashboard interactivo"],
     },
     {
-        icon: Layers,
-        title: "Gestión de Dispositivos",
-        description: "Organiza por grupos y ubicaciones",
-        items: ["Grupos personalizados", "Múltiples ubicaciones", "Estados de conexión"],
-    },
-    {
-        icon: Shield,
-        title: "Seguridad y Control",
-        description: "Tus datos protegidos, tu control total",
-        items: ["Autenticación segura", "Datos privados", "Acceso multiplataforma"],
+        icon: Zap,
+        title: "Gestión de Dispositivos ESP32",
+        description: "Conecta y controla tus dispositivos IoT",
+        items: ["Conexión directa ESP32", "Estados de conexión", "Acceso desde cualquier lugar"],
     },
 ]
 

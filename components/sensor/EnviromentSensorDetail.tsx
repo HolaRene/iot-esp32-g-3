@@ -24,62 +24,52 @@ interface HistoryPoint {
     presion: number
 }
 
+/**
+ * 📊 Componente de Sensor Ambiental
+ * 
+ * Muestra datos en tiempo real de temperatura, humedad y presión.
+ * Crea un historial local de los últimos 10 valores recibidos.
+ * 
+ * 💾 Tabla BD: sensores_ambiental
+ * 🔄 Actualización: Tiempo real con eventos UPDATE
+ */
 export function EnvironmentalSensorDetail({ sensor }: { sensor: EnvironmentalSensorData }) {
     const supabase = createClient()
     const [history, setHistory] = useState<HistoryPoint[]>([])
-    const [isLoading, setIsLoading] = useState(true)
 
-    // Obtener historial inicial y suscribirse a tiempo real
+    // Suscripción en tiempo real para actualizar el historial
     useEffect(() => {
         if (!sensor?.id) return
 
         let isMounted = true
 
-        const fetchHistoryData = async () => {
-            try {
-                setIsLoading(true)
-                const { data, error } = await supabase
-                    .from('sensores_ambiental')
-                    .select('temperatura, humedad, presion, created_at')
-                    .eq('sensor_id', sensor.id)
-                    .order('created_at', { ascending: true })
-                    .limit(50)
-
-                if (error) throw error
-
-                if (isMounted && data) {
-                    const formattedHistory = data.map(point => ({
-                        tiempo: new Date(point.created_at).toLocaleTimeString("es-ES", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit"
-                        }),
-                        temperatura: point.temperatura,
-                        humedad: point.humedad,
-                        presion: point.presion
-                    }))
-                    setHistory(formattedHistory)
-                }
-            } catch (error) {
-                console.error("Error loading sensor history:", error)
-            } finally {
-                if (isMounted) setIsLoading(false)
-            }
+        // Agregar valor inicial al historial
+        const initialPoint: HistoryPoint = {
+            tiempo: new Date().toLocaleTimeString("es-ES", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            }),
+            temperatura: sensor.temperatura,
+            humedad: sensor.humedad,
+            presion: sensor.presion
         }
+        setHistory([initialPoint])
 
-        fetchHistoryData()
-
+        // Escuchar actualizaciones en tiempo real
         const channel = supabase
             .channel(`realtime-sensor-${sensor.id}`)
             .on(
                 "postgres_changes",
                 {
-                    event: "INSERT",
+                    event: "UPDATE",
                     schema: "public",
                     table: "sensores_ambiental",
                     filter: `sensor_id=eq.${sensor.id}`
                 },
                 (payload) => {
+                    if (!isMounted) return
+
                     const newData = payload.new
                     const tiempo = new Date().toLocaleTimeString("es-ES", {
                         hour: "2-digit",
@@ -87,9 +77,9 @@ export function EnvironmentalSensorDetail({ sensor }: { sensor: EnvironmentalSen
                         second: "2-digit"
                     })
 
-                    if (!isMounted) return
-
+                    // Agregar nuevo punto al historial (máximo 10 valores)
                     setHistory((prev) => {
+                        // Evitar duplicados por timestamp
                         if (prev.length > 0 && prev[prev.length - 1].tiempo === tiempo) {
                             return prev
                         }
@@ -101,7 +91,8 @@ export function EnvironmentalSensorDetail({ sensor }: { sensor: EnvironmentalSen
                             presion: newData.presion
                         }]
 
-                        return updated.slice(-50)
+                        // Mantener solo los últimos 10 valores
+                        return updated.slice(-10)
                     })
                 }
             )
@@ -111,7 +102,7 @@ export function EnvironmentalSensorDetail({ sensor }: { sensor: EnvironmentalSen
             isMounted = false
             supabase.removeChannel(channel)
         }
-    }, [sensor.id, supabase])
+    }, [sensor.id, sensor.temperatura, sensor.humedad, sensor.presion, supabase])
 
     return (
         <div className="space-y-4">
@@ -158,12 +149,10 @@ export function EnvironmentalSensorDetail({ sensor }: { sensor: EnvironmentalSen
             <Card className="p-4">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="text-base font-semibold">Tendencias en Tiempo Real</h3>
-                    {isLoading && (
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Clock className="w-3 h-3 animate-spin" />
-                            Cargando...
-                        </div>
-                    )}
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        Últimos {history.length} valores
+                    </div>
                 </div>
                 <ResponsiveContainer width="100%" height={250}>
                     <AreaChart data={history} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>

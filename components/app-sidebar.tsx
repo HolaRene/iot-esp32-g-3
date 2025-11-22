@@ -3,13 +3,14 @@
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { AlertCircle, Group, Home, LayoutDashboard, Settings, Thermometer } from "lucide-react"
+import { AlertCircle, Group, Home, LayoutDashboard, Settings, Thermometer, BookOpen } from "lucide-react"
 
 const links = [
     { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: "Sensores", href: "/dispositivos-flexis", icon: <Thermometer className="w-5 h-5" /> },
     { name: "Alertas", href: "/alertas", icon: <AlertCircle className="w-5 h-5" /> },
-    { name: "grupos", href: "/grupos", icon: <Group className="w-5 h-5" /> },
+    { name: "Grupos", href: "/grupos", icon: <Group className="w-5 h-5" /> },
+    { name: "Documentación", href: "/documentacion", icon: <BookOpen className="w-5 h-5" /> },
     { name: "Configuración", href: "/configuracion", icon: <Settings className="w-5 h-5" /> },
 ]
 
@@ -20,10 +21,10 @@ const LeftSidebar = () => {
 
 
     return (
-        <section className={cn("sticky left-0 top-0 flex w-fit flex-col  justify-between  border-none  bg-black-1 pt-8 text-white-1 max-md:hidden lg:w-[270px] lg:pl-8 h-[calc(100vh-5px)] flex flex-col justify-between", {
+        <section className={cn("sticky left-0 top-0 flex w-fit flex-col justify-between border-none bg-black-1 pt-0 text-white-1 max-md:hidden lg:w-[270px] lg:pl-8 h-[calc(100vh-5px)]", {
             'hidden': isFDahsboar
         })}>
-            <nav className="flex flex-col gap-6 pl-5">
+            <nav className="flex flex-col gap-6 pl-5 pt-8">
                 <Link href="/" className="flex items-center grebg-green-400 pb-10 mt-5 max-lg:justify-centers cursor-pointer ">
                     <Home />
                     <h1 className="text-24 font-extrabold max-lg:hidden">Inicio</h1>

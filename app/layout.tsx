@@ -1,6 +1,6 @@
 
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Ubuntu } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Toaster } from "sonner";
@@ -13,15 +13,15 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Aplicación flexi IoT gripo 3",
-  description: "Una aplicación con Supabase",
+  title: "Aplicación flexi IoT",
+  description: "Una aplicación con Supabase para control de sensores IoT",
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  display: "swap",
-  subsets: ["latin"],
-});
+const geistSans = Ubuntu({
+  weight: ['400', '500', '700'],
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+})
 
 export default async function RootLayout({
   children,
@@ -30,7 +30,7 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} $ antialiased`}>
+      <body className={`${geistSans.className} $ antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

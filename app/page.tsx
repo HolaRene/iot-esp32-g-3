@@ -7,11 +7,12 @@ import { HeroSection } from "@/components/landing/hero-section"
 import { LandingFooter } from "@/components/landing/landing-footer"
 import { TestimonialsSection } from "@/components/landing/testimonial-section"
 import { UseCasesSection } from "@/components/landing/use-caso-section"
+import { CategoriesSection } from "@/components/landing/categories-section"
 
 export const metadata = {
-  title: "Tablero IoT - Tu Centro de Control para Dispositivos Inteligentes",
+  title: "Tablero IoT - Gestiona Sensores por Grupos y Categorías",
   description:
-    "Monitorea todos tus sensores en un solo lugar. Conecta dispositivos ESP32, visualiza datos en tiempo real y toma el control desde cualquier dispositivo.",
+    "Organiza tus sensores ESP32 en grupos personalizados. 7 categorías disponibles: Ambiental, Calidad de Aire, Suelo, Industrial, Energía, Seguridad y Personalizado. Visualiza datos en tiempo real.",
 }
 
 export default function LandingPage() {
@@ -19,12 +20,14 @@ export default function LandingPage() {
     <main className="min-h-screen bg-background">
       <HeroSection />
       <FeaturesSection />
+      <CategoriesSection />
       <DemoSection />
       <UseCasesSection />
       <HardwareSection />
-      <TestimonialsSection />
+      {/* <TestimonialsSection /> */}
       <CTASection />
       <LandingFooter />
     </main>
   )
 }
+

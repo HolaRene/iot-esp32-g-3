@@ -19,22 +19,22 @@ export function HeroSection() {
                     </div>
 
                     <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 text-balance leading-tight">
-                        Monitorea todos tus sensores en un solo lugar
+                        Gestiona tus sensores IoT por grupos y categorías
                     </h1>
 
                     <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-8 text-balance leading-relaxed">
-                        Conecta dispositivos ESP32, visualiza datos en tiempo real y toma el control desde cualquier dispositivo
+                        Organiza sensores en grupos, clasifica por 7 categorías diferentes, y visualiza datos en tiempo real desde tu ESP32
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link href={'/auth/login'}>
+                        <Link href={'/grupos'}>
                             <Button size="lg" className="gap-2 bg-primary hover:bg-primary/90">
-                                Inicia sesión
+                                Ver Grupos
                                 <ArrowRight className="w-4 h-4" />
                             </Button>
                         </Link>
-                        <Link href={'/dashboard'}><Button size="lg" variant="outline" className="border-primary/30 hover:bg-primary/5 bg-transparent">
-                            Ir al tablero principal                        </Button></Link>
+                        <Link href={'/dispositivos-flexis'}><Button size="lg" variant="outline" className="border-primary/30 hover:bg-primary/5 bg-transparent">
+                            Gestionar Sensores                        </Button></Link>
                     </div>
                 </div>
 

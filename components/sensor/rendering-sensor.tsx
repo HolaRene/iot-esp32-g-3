@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Check, Copy, Edit, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Copy, Edit, Trash2, BookOpen } from 'lucide-react'
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 
@@ -160,7 +160,7 @@ export function SensorDetailsPage({ id }: { id: string }) {
         if (id) fetchSensor()
     }, [id])
 
-    // Realtime (igual, sin cambios)
+    // Realtime - Optimizado para actualizaciones incrementales
     useEffect(() => {
         if (!categoria) return
         const tablaDetalles = categoriaTablaMap[categoria]
@@ -169,20 +169,38 @@ export function SensorDetailsPage({ id }: { id: string }) {
             .channel(`sensor-${id}`)
             .on(
                 "postgres_changes",
-                { event: "*", schema: "public", table: "sensores", filter: `id=eq.${id}` },
-                () => fetchSensor()
+                { event: "UPDATE", schema: "public", table: "sensores", filter: `id=eq.${id}` },
+                (payload) => {
+                    // Actualizar solo los campos cambiados del sensor base
+                    setSensor((prev: any) => {
+                        if (!prev) return prev
+                        return {
+                            ...prev,
+                            ...payload.new
+                        }
+                    })
+                }
             )
             .on(
                 "postgres_changes",
-                { event: "*", schema: "public", table: tablaDetalles, filter: `sensor_id=eq.${id}` },
-                () => fetchSensor()
+                { event: "UPDATE", schema: "public", table: tablaDetalles, filter: `sensor_id=eq.${id}` },
+                (payload) => {
+                    // Actualizar solo los detalles específicos de la categoría
+                    setSensor((prev: any) => {
+                        if (!prev) return prev
+                        return {
+                            ...prev,
+                            ...payload.new
+                        }
+                    })
+                }
             )
             .subscribe()
 
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [id, categoria])
+    }, [id, categoria, supabase])
 
     // Render
     if (loading) return <p className="text-center py-10">Cargando datos del sensor...</p>
@@ -293,10 +311,58 @@ export function SensorDetailsPage({ id }: { id: string }) {
                                         ))}
                                     </div>
                                 </div>
+
+                                {/* API Key */}
+                                <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">API Key</p>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            readOnly
+                                            value="api-secret-***"
+                                            className="font-mono text-sm"
+                                            type="password"
+                                        />
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={() => copyToClipboard("api-secret-key", "api-key")}
+                                        >
+                                            {copied === "api-key" ? <Check size={16} /> : <Copy size={16} />}
+                                        </Button>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        💡 Obtén tu API Key desde configuración del sensor
+                                    </p>
+                                </div>
+
+                                {/* Documentación */}
+                                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-3 rounded-lg">
+                                    <div className="flex items-start gap-2">
+                                        <BookOpen className="w-4 h-4 text-blue-600 mt-0.5" />
+                                        <div>
+                                            <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
+                                                ¿Cómo conectar mi sensor?
+                                            </p>
+                                            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                                                Consulta ejemplos de código para ESP32, Arduino, Raspberry Pi y más
+                                            </p>
+                                            <Link href="/documentacion">
+                                                <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-xs">
+                                                    Ver documentación completa →
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <SheetFooter>
-                                <Button variant="secondary" onClick={() => console.log("Cerrar sheet")}>Cerrar</Button>
+                                <Link href="/documentacion" className="w-full">
+                                    <Button variant="default" className="w-full">
+                                        <BookOpen size={16} className="mr-2" />
+                                        Ver Ejemplos de Integración
+                                    </Button>
+                                </Link>
                             </SheetFooter>
                         </SheetContent>
                     </Sheet>

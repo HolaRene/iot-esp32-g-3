@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { BookDashed, LogOut, Moon, Settings, Sun, User } from 'lucide-react'
+import { LogOut, Moon, Settings, Sun, User, BookOpen, Home } from 'lucide-react'
 import { createClient } from "@/lib/supabase/client"
 
 // Componentes de shadcn
@@ -31,7 +31,7 @@ interface UserProfile {
 }
 
 const Navbar = () => {
-    const { setTheme, } = useTheme()
+    const { setTheme } = useTheme()
     const [user, setUser] = useState<UserProfile | null>(null)
     const [loading, setLoading] = useState(true)
     const supabase = createClient()
@@ -106,7 +106,6 @@ const Navbar = () => {
 
             {/* Lado derecho - Navegación y usuario */}
             <div className="flex items-center gap-4">
-                {/* Navegación para usuarios autenticados */}
                 {/* Selector de tema */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -166,15 +165,15 @@ const Navbar = () => {
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
-                                <Link href="/perfil" className="cursor-pointer">
-                                    <User className="h-4 w-4 mr-2" />
-                                    Perfil
+                                <Link href="/dashboard" className="cursor-pointer">
+                                    <Home className="h-4 w-4 mr-2" />
+                                    Dashboard
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                                <Link href="/dashboard" className="cursor-pointer">
-                                    <BookDashed className="h-4 w-4 mr-2" />
-                                    Tablero
+                                <Link href="/perfil" className="cursor-pointer">
+                                    <User className="h-4 w-4 mr-2" />
+                                    Perfil
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
@@ -183,11 +182,14 @@ const Navbar = () => {
                                     Configuración
                                 </Link>
                             </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href="/documentacion" className="cursor-pointer">
+                                    <BookOpen className="h-4 w-4 mr-2" />
+                                    Documentación
+                                </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={handleLogout}
-                                className="text-destructive focus:text-destructive cursor-pointer"
-                            >
+                            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                                 <LogOut className="h-4 w-4 mr-2" />
                                 Cerrar Sesión
                             </DropdownMenuItem>
