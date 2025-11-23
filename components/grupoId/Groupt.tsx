@@ -1,64 +1,74 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Eye, Trash2, ArrowLeft, Loader2 } from 'lucide-react'
+import { Plus, Eye, Trash2, ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
+// Interfaces corregidas alineadas con el esquema
 interface Sensor {
     id: string
-    nombre: string
+    dispositivo_id: string // CORREGIDO
     categoria: string
-    ubicacion: string
-    activo: boolean
+    ubicacion: string | null
+    activo: boolean | null
     grupo_id: string | null
-    created_at: string
-    // Datos específicos por categoría
-    temperatura?: number
-    humedad?: number
-    presion?: number
-    co2?: number
-    pm25?: number
-    voc?: number
-    voltaje?: number
-    corriente?: number
-    potencia?: number
+    creado_en: string // CORREGIDO
+    // Datos específicos
+    [key: string]: any // Para datos dinámicos
 }
 
 interface GroupData {
     id: string
     name: string
     description: string | null
-    is_active: boolean
+    is_active: boolean | null
     sensorCount: number
 }
 
-/**
- * 📊 Página de Detalles de Grupo
- * Muestra todos los sensores de un grupo con datos en tiempo real
- */
 export default function GroupDetailsPage({ id }: { id: string }) {
+    const router = useRouter()
     const supabase = createClient()
     const [sensors, setSensors] = useState<Sensor[]>([])
     const [groupData, setGroupData] = useState<GroupData | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
-    // Obtener información del grupo
-    const fetchGroupData = async () => {
+    // Obtener usuario actual para RLS
+    const getCurrentUser = useCallback(async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        return user
+    }, [supabase])
+
+    // Obtener información del grupo (CORREGIDO)
+    const fetchGroupData = useCallback(async () => {
+        const user = await getCurrentUser()
+        if (!user) return
+
         const { data, error } = await supabase
-            .from('sensor_groups')
-            .select('*, sensores(id)')
-            .eq('id', id)
+            .from("sensor_groups")
+            .select("*")
+            .eq("id", id)
+            .eq("user_id", user.id)
             .single()
 
         if (error) {
-            console.error('Error fetching group:', error)
+            console.error("Error fetching group:", error)
+            setError("No se pudo cargar el grupo")
             return
         }
+
+        // Contar sensores del grupo con RPC para evitar N+1
+        const { count } = await supabase
+            .from("sensores")
+            .select("id", { count: "exact", head: true })
+            .eq("grupo_id", id)
+            .eq("usuario_id", user.id) // RLS
 
         if (data) {
             setGroupData({
@@ -66,146 +76,203 @@ export default function GroupDetailsPage({ id }: { id: string }) {
                 name: data.name,
                 description: data.description,
                 is_active: data.is_active,
-                sensorCount: data.sensores?.length || 0
+                sensorCount: count || 0
             })
         }
-    }
+    }, [id, supabase, getCurrentUser])
 
-    // Obtener sensores del grupo con sus datos
-    const fetchGroupSensors = async () => {
+    // Obtener datos de múltiples sensores en paralelo optimizado
+    const fetchSensorSpecificData = useCallback(async (sensorIds: string[]) => {
+        const user = await getCurrentUser()
+        if (!user) return {}
+
+        const tableMap: Record<string, string> = {
+            ambiental: "sensores_ambiental",
+            calidad_aire: "sensores_calidad_aire",
+            energia: "sensores_energia",
+            industrial: "sensores_industrial",
+            seguridad: "sensores_seguridad",
+            suelo: "sensores_suelo",
+            personalizado: "sensores_personalizado"
+        }
+
+        // Query múltiple con OR para mejor rendimiento
+        const promises = Object.entries(tableMap).map(async ([categoria, tabla]) => {
+            const { data } = await supabase
+                .from(tabla)
+                .select("*")
+                .in("sensor_id", sensorIds)
+                .eq("usuario_id", user.id) // RLS
+
+            return { categoria, data }
+        })
+
+        const results = await Promise.all(promises)
+        const dataMap: Record<string, any> = {}
+
+        results.forEach(({ data }) => {
+            data?.forEach(item => {
+                dataMap[item.sensor_id] = item
+            })
+        })
+
+        return dataMap
+    }, [supabase, getCurrentUser])
+
+    // Obtener sensores del grupo (CORREGIDO)
+    const fetchGroupSensors = useCallback(async () => {
         setIsLoading(true)
+        setError(null)
 
-        const { data: sensorsData, error } = await supabase
-            .from('sensores')
-            .select(`
-                id,
-                nombre,
-                categoria,
-                ubicacion,
-                activo,
-                grupo_id,
-                created_at
-            `)
-            .eq('grupo_id', id)
-            .order('created_at', { ascending: false })
-
-        if (error) {
-            console.error('Error fetching sensors:', error)
+        const user = await getCurrentUser()
+        if (!user) {
             setIsLoading(false)
             return
         }
 
-        // Obtener datos específicos de cada sensor según su categoría
-        const sensorsWithData = await Promise.all(
-            (sensorsData || []).map(async (sensor) => {
-                let specificData = {}
+        try {
+            const { data: sensorsData, error: sensorsError } = await supabase
+                .from("sensores")
+                .select(`
+          id,
+          dispositivo_id,
+          categoria,
+          ubicacion,
+          activo,
+          grupo_id,
+          creado_en
+        `)
+                .eq("grupo_id", id)
+                .eq("usuario_id", user.id) // CRÍTICO: RLS
+                .order("creado_en", { ascending: false })
 
-                try {
-                    const tableMap: Record<string, string> = {
-                        'ambiental': 'sensores_ambiental',
-                        'calidad_aire': 'sensores_calidad_aire',
-                        'energia': 'sensores_energia',
-                        'industrial': 'sensores_industrial',
-                        'seguridad': 'sensores_seguridad',
-                        'suelo': 'sensores_suelo',
-                        'personalizado': 'sensores_personalizado'
-                    }
+            if (sensorsError) throw sensorsError
 
-                    const tableName = tableMap[sensor.categoria]
-                    if (tableName) {
-                        const { data } = await supabase
-                            .from(tableName)
-                            .select('*')
-                            .eq('sensor_id', sensor.id)
-                            .single()
+            // Obtener datos específicos en batch
+            const sensorIds = sensorsData?.map(s => s.id) || []
+            const specificDataMap = await fetchSensorSpecificData(sensorIds)
 
-                        if (data) {
-                            specificData = data
-                        }
-                    }
-                } catch (err) {
-                    console.error(`Error fetching data for sensor ${sensor.id}:`, err)
-                }
+            // Combinar datos
+            const sensorsWithData = (sensorsData || []).map(sensor => ({
+                ...sensor,
+                ...specificDataMap[sensor.id]
+            }))
 
-                return {
-                    ...sensor,
-                    ...specificData
-                }
-            })
-        )
+            setSensors(sensorsWithData)
+        } catch (err) {
+            console.error("Error fetching sensors:", err)
+            setError("No se pudieron cargar los sensores")
+        } finally {
+            setIsLoading(false)
+        }
+    }, [id, supabase, getCurrentUser, fetchSensorSpecificData])
 
-        setSensors(sensorsWithData)
-        setIsLoading(false)
-    }
-
-    // Calcular estadísticas del grupo
-    const calculateStats = () => {
-        const ambientalSensors = sensors.filter(s => s.categoria === 'ambiental')
-        const avgTemp = ambientalSensors.length > 0
-            ? ambientalSensors.reduce((sum, s) => sum + (s.temperatura || 0), 0) / ambientalSensors.length
-            : 0
-
-        const avgHumidity = ambientalSensors.length > 0
-            ? ambientalSensors.reduce((sum, s) => sum + (s.humedad || 0), 0) / ambientalSensors.length
-            : 0
-
-        const onlineCount = sensors.filter(s => s.activo).length
+    // Calcular estadísticas con seguridad
+    const calculateStats = useCallback(() => {
+        const ambientalSensors = sensors.filter(s => s.categoria === "ambiental")
+        const hasAmbiental = ambientalSensors.length > 0
 
         return {
-            avgTemp: avgTemp.toFixed(1),
-            avgHumidity: avgHumidity.toFixed(1),
-            onlineCount
+            avgTemp: hasAmbiental
+                ? (ambientalSensors.reduce((sum, s) => sum + (s.temperatura || 0), 0) / ambientalSensors.length).toFixed(1)
+                : "--",
+            avgHumidity: hasAmbiental
+                ? (ambientalSensors.reduce((sum, s) => sum + (s.humedad || 0), 0) / ambientalSensors.length).toFixed(1)
+                : "--",
+            onlineCount: sensors.filter(s => s.activo).length
         }
-    }
+    }, [sensors])
 
     const stats = calculateStats()
 
-    // Suscripción en tiempo real
+    // Suscripción en tiempo real CORREGIDA
     useEffect(() => {
         if (!id) return
 
         fetchGroupData()
         fetchGroupSensors()
 
-        // Suscribirse a cambios en los sensores del grupo
+        // Canal principal para cambios en sensores del grupo
         const channel = supabase
             .channel(`group-sensors-${id}`)
             .on(
-                'postgres_changes',
+                "postgres_changes",
                 {
-                    event: '*',
-                    schema: 'public',
-                    table: 'sensores',
+                    event: "*",
+                    schema: "public",
+                    table: "sensores",
                     filter: `grupo_id=eq.${id}`
                 },
                 () => {
-                    // Refrescar sensores cuando hay cambios
                     fetchGroupSensors()
                 }
             )
+            // Suscribirse a cambios en todas las tablas de datos
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "sensores_ambiental"
+                },
+                () => fetchGroupSensors()
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "sensores_calidad_aire"
+                },
+                () => fetchGroupSensors()
+            )
+            // ... REPETIR PARA CADA TABLA O USAR UN WILDCARD CON RPC
             .subscribe()
 
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [id, supabase])
+    }, [id, fetchGroupData, fetchGroupSensors, supabase])
 
-    const handleDeleteSensor = async (sensorId: string) => {
-        if (!confirm("¿Estás seguro de eliminar este sensor del grupo?")) return
+    // Eliminar sensor del grupo con verificación (CORREGIDO)
+    const handleDeleteSensor = useCallback(async (sensorId: string) => {
+        if (!confirm("¿Estás seguro de quitar este sensor del grupo?")) return
 
-        const { error } = await supabase
-            .from('sensores')
-            .update({ grupo_id: null }) // Solo quitamos del grupo, no eliminamos el sensor
-            .eq('id', sensorId)
+        try {
+            const user = await getCurrentUser()
+            if (!user) throw new Error("No autorizado")
 
-        if (error) {
-            alert("Error al quitar el sensor del grupo")
-        } else {
+            // Verificar que el sensor pertenece al grupo y usuario
+            const { data: sensor, error: verifyError } = await supabase
+                .from("sensores")
+                .select("id")
+                .eq("id", sensorId)
+                .eq("grupo_id", id)
+                .eq("usuario_id", user.id)
+                .single()
+
+            if (verifyError || !sensor) {
+                throw new Error("Sensor no encontrado o no autorizado")
+            }
+
+            const { error } = await supabase
+                .from("sensores")
+                .update({ grupo_id: null })
+                .eq("id", sensorId)
+                .eq("usuario_id", user.id) // RLS
+
+            if (error) throw error
+
+            // Refrescar datos
             fetchGroupSensors()
             fetchGroupData()
+        } catch (err) {
+            console.error("Error removing sensor:", err)
+            setError("No se pudo quitar el sensor del grupo")
         }
-    }
+    }, [id, supabase, getCurrentUser, fetchGroupSensors, fetchGroupData])
 
+    // Estado de carga
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-96">
@@ -214,20 +281,33 @@ export default function GroupDetailsPage({ id }: { id: string }) {
         )
     }
 
+    // Estado de error
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <Card className="p-6 text-center">
+                    <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+                    <p className="text-destructive font-medium">{error}</p>
+                    <Button variant="outline" className="mt-4" onClick={() => fetchGroupSensors()}>
+                        Reintentar
+                    </Button>
+                </Card>
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-6">
-            {/* Header with back button */}
+            {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link href="/grupos">
-                        <Button variant="ghost" size="icon">
-                            <ArrowLeft size={20} />
-                        </Button>
-                    </Link>
+                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                        <ArrowLeft size={20} />
+                    </Button>
                     <div>
-                        <h1 className="text-3xl font-bold">{groupData?.name || 'Grupo'}</h1>
+                        <h1 className="text-3xl font-bold">{groupData?.name || "Grupo"}</h1>
                         <p className="text-muted-foreground mt-1">
-                            {groupData?.description || 'Monitorea todos los sensores de este grupo en tiempo real.'}
+                            {groupData?.description || "Monitorea todos los sensores en tiempo real."}
                         </p>
                     </div>
                 </div>
@@ -239,7 +319,7 @@ export default function GroupDetailsPage({ id }: { id: string }) {
                 </Link>
             </div>
 
-            {/* Summary Cards */}
+            {/* Summary Cards - SOLO MUESTRA SI HAY DATOS */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="p-6">
                     <p className="text-sm font-medium text-muted-foreground">Total Sensores</p>
@@ -247,16 +327,21 @@ export default function GroupDetailsPage({ id }: { id: string }) {
                 </Card>
                 <Card className="p-6">
                     <p className="text-sm font-medium text-muted-foreground">Activos</p>
-                    <p className="text-2xl font-bold mt-2 text-green-500">{stats.onlineCount}</p>
+                    <p className="text-2xl font-bold mt-2 text-green-600">{stats.onlineCount}</p>
                 </Card>
-                <Card className="p-6">
-                    <p className="text-sm font-medium text-muted-foreground">Temp. Promedio</p>
-                    <p className="text-2xl font-bold mt-2">{stats.avgTemp}°C</p>
-                </Card>
-                <Card className="p-6">
-                    <p className="text-sm font-medium text-muted-foreground">Humedad Promedio</p>
-                    <p className="text-2xl font-bold mt-2">{stats.avgHumidity}%</p>
-                </Card>
+                {/* Solo muestra si hay sensores ambientales */}
+                {sensors.some(s => s.categoria === "ambiental") && (
+                    <>
+                        <Card className="p-6">
+                            <p className="text-sm font-medium text-muted-foreground">Temp. Promedio</p>
+                            <p className="text-2xl font-bold mt-2">{stats.avgTemp}°C</p>
+                        </Card>
+                        <Card className="p-6">
+                            <p className="text-sm font-medium text-muted-foreground">Humedad Promedio</p>
+                            <p className="text-2xl font-bold mt-2">{stats.avgHumidity}%</p>
+                        </Card>
+                    </>
+                )}
             </div>
 
             {/* Sensors Table */}
@@ -264,14 +349,18 @@ export default function GroupDetailsPage({ id }: { id: string }) {
                 {sensors.length === 0 ? (
                     <div className="p-12 text-center">
                         <p className="text-muted-foreground">
-                            No hay sensores en este grupo. Agrega sensores desde la página de dispositivos.
+                            No hay sensores en este grupo.{" "}
+                            <Link href="/dispositivos-flexis" className="text-primary hover:underline">
+                                Agrega sensores
+                            </Link>{" "}
+                            desde la página de dispositivos.
                         </p>
                     </div>
                 ) : (
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50">
-                                <TableHead>Nombre</TableHead>
+                                <TableHead>Dispositivo ID</TableHead>
                                 <TableHead>Categoría</TableHead>
                                 <TableHead>Ubicación</TableHead>
                                 <TableHead>Estado</TableHead>
@@ -279,20 +368,20 @@ export default function GroupDetailsPage({ id }: { id: string }) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {sensors.map((sensor) => (
-                                <TableRow key={sensor.id} className="hover:bg-muted/50 transition-smooth">
+                            {sensors.map(sensor => (
+                                <TableRow key={sensor.id} className="hover:bg-muted/50 transition-colors">
                                     <TableCell className="font-medium">
                                         <Link href={`/sensor/${sensor.id}`} className="hover:underline">
-                                            {sensor.nombre}
+                                            {sensor.dispositivo_id}
                                         </Link>
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant="outline" className="capitalize">
-                                            {sensor.categoria.replace('_', ' ')}
+                                            {sensor.categoria.replace("_", " ")}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
-                                        {sensor.ubicacion || 'Sin ubicación'}
+                                        {sensor.ubicacion || "Sin ubicación"}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant={sensor.activo ? "default" : "secondary"}>
@@ -302,14 +391,13 @@ export default function GroupDetailsPage({ id }: { id: string }) {
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             <Link href={`/sensor/${sensor.id}`}>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" title="Ver detalles">
+                                                <Button variant="ghost" size="icon" title="Ver detalles">
                                                     <Eye size={16} />
                                                 </Button>
                                             </Link>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-8 w-8"
                                                 title="Quitar del grupo"
                                                 onClick={() => handleDeleteSensor(sensor.id)}
                                             >

@@ -115,9 +115,6 @@ export default function GroupsPage() {
                                                 <Eye size={16} />
                                             </Link>
                                         </Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit group">
-                                            <Edit size={16} />
-                                        </Button>
                                         <Button
                                             variant="ghost"
                                             size="icon"
