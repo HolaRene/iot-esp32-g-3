@@ -201,7 +201,7 @@ const Navbar = () => {
                             <Link href="/auth/login">Iniciar Sesión</Link>
                         </Button>
                         <Button size="sm" asChild>
-                            <Link href="/auth/register">Registrarse</Link>
+                            <Link href="/auth/sign-up">Registrarse</Link>
                         </Button>
                     </div>
                 )}
