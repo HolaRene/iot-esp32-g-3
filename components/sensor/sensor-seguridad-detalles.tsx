@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { createClient } from "@/lib/supabase/client"
-import { Shield, AlertTriangle, CheckCircle, XCircle, Eye, DoorOpen, Flame, Droplets, Ruler, Lightbulb, Bell } from "lucide-react"
+import { Shield, AlertTriangle, Eye, DoorOpen, Flame, Droplets, Ruler, Lightbulb, Bell, Sun, Moon } from "lucide-react"
 
 interface SecuritySensorData {
     id: string
@@ -19,6 +19,7 @@ interface SecuritySensorData {
     distancia: number
     luces: boolean
     alarma: boolean
+    modo?: string
 }
 
 interface EventLog {
@@ -168,6 +169,38 @@ export function SecuritySensorDetail({ sensor }: { sensor: SecuritySensorData })
 
             {/* Controles */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Card className="p-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-xs text-muted-foreground">Modo</p>
+                            <div className="flex items-center gap-2 mt-1">
+                                {sensor.modo === 'nocturno' ? (
+                                    <>
+                                        <Badge variant="default">Nocturno</Badge>
+                                        <span className="text-xs text-green-600">Funciona en este modo</span>
+                                    </>
+                                ) : sensor.modo === 'diurno' ? (
+                                    <>
+                                        <Badge variant="secondary">Diurno</Badge>
+                                        <span className="text-xs text-red-600">Solo funciona en modo nocturno</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Badge variant="secondary">-</Badge>
+                                        <span className="text-xs text-muted-foreground">Modo no especificado</span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        <div>
+                            {sensor.modo === 'nocturno' ? (
+                                <Moon className="w-5 h-5 text-blue-600" />
+                            ) : (
+                                <Sun className="w-5 h-5 text-yellow-500" />
+                            )}
+                        </div>
+                    </div>
+                </Card>
                 <Card className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
